@@ -1,3 +1,8 @@
+# Setting files
+.project
+.pydevproject
+.settings*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -64,7 +69,8 @@ target/
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*

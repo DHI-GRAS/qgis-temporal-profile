@@ -1,0 +1,5 @@
+<RCC>
+ <qresource prefix="/plugins/temporalprofiletool">
+  <file>icons/temporalProfileIcon.png</file>
+ </qresource>
+</RCC>
