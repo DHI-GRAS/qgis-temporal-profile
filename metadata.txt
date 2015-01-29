@@ -1,15 +1,21 @@
 [general]
 name=Temporal/Spectral Profile Tool
 description=Plots profile from raster bands. Based on Profile Tool.
-about = This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa. Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
+about =
+	A QGIS plugin for interactive plotting of temporal or spectral information stored in multi-band rasters. Based on Profile tool plugin.
+
+	After installation and activation the plugin can be accessed either from main menu (under Plugins > Profile Tool > Temporal/Spectral Profile) or from an icon on the taskbar.
+ 
+	This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa. Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
 category=Raster
-version=1.0
+version=1.0.1
 qgisMinimumVersion=2.0
 
 author=Radoslaw Guzinski
 email=rmgu@dhi-gras.com
 
-#changelog=
+#changelog= 1.0.1
+	- Update metadata.txt
 
 ; tags are in comma separated value format, spaces are allowed
 tags=raster,profile,timeseries,spectral
