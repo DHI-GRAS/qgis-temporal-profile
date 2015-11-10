@@ -248,8 +248,8 @@ class PlottingTool:
             temp1 = wdg.plotWdg.figure.get_axes()[0].get_lines()
             for i in range(len(temp1)):
                 if name == str(temp1[i].get_gid()):
-                    temp1[i].set_color((color1.red() / 255.0 , color1.green() / 255.0 , color1.blue() / 255.0 ,  color1.alpha() / 255.0 ))
-                    #wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
+                    # avoid this issue https://github.com/matplotlib/matplotlib/issues/1690/
+                    temp1[i].set_color('#%02x%02x%02x' % (color1.red(), color1.green(), color1.blue()))
                     wdg.plotWdg.draw()
                     break
 
