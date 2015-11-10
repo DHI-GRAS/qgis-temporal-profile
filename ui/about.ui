@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>572</width>
-    <height>274</height>
+    <width>510</width>
+    <height>327</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Profile Tool</string>
+      <string>Temporal/Spectral Profile Tool</string>
      </property>
     </widget>
    </item>
@@ -66,8 +66,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>535</width>
-        <height>284</height>
+        <width>496</width>
+        <height>259</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">

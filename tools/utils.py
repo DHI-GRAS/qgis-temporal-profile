@@ -32,9 +32,9 @@
 """
 
 def isProfilable(layer):
-	"""
-		Returns True if layer is capable of being profiles,
-		else returns False
-	"""
+    """
+        Returns True if layer is capable of being profiles,
+        else returns False
+    """
 
-	return	(layer.type() == layer.RasterLayer)
+    return    (layer.type() == layer.RasterLayer)
