@@ -93,8 +93,8 @@ class PTDockWidget(QDockWidget, FormClass):
         self.tableView.setColumnWidth(2, 150)
         hh = self.tableView.horizontalHeader()
         hh.setStretchLastSection(True)
-        self.tableView.setColumnHidden(4 , True)
-        self.mdl.setHorizontalHeaderLabels(["","","Layer","Band"])
+        self.tableView.setColumnHidden(3 , True)
+        self.mdl.setHorizontalHeaderLabels(["","","Layer"])
         #self.checkBox.setEnabled(False)
 
         #The ploting area
