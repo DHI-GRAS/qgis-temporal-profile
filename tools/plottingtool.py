@@ -43,15 +43,12 @@ has_qwt = False
 has_mpl = False
 try:
     from PyQt4.Qwt5 import *
-    #print("profiletool : Qwt5 imported")
     has_qwt = True
     import itertools # only needed for Qwt plot
 except:
     pass
 try:
-    #from matplotlib import *
     import matplotlib
-    #print("profiletool : matplotlib %s imported" % matplotlib.__version__)
     has_mpl = True
 except:
     pass
@@ -62,7 +59,6 @@ class PlottingTool:
 
 
     def changePlotWidget(self, library, frame_for_plot):
-        #print("profiletool : changePlotWidget( %s )" % library )
         if library == "Qwt5" and has_qwt:
             plotWdg = QwtPlot(frame_for_plot)
             sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)

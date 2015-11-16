@@ -39,13 +39,8 @@ from PyQt4.QtSvg import * # required in some distros
 from qgis.core import *
 from plottingtool import PlottingTool
 
-from math import sqrt
 from osgeo import gdal, ogr
 import numpy as np
-#from profilebase import Ui_ProfileBase
-from dataReaderTool import DataReaderTool
-import platform
-import sys
 from PyQt4.QtCore import SIGNAL,SLOT,pyqtSignature
 
 
@@ -83,25 +78,38 @@ class DoProfile(QWidget):
                 self.removeClosedLayers(model1)
                 break
 
-    def calculatePointProfile(self, points1, model1, library, vertline = True):
-        self.pointstoDraw = points1
+    def calculatePointProfile(self, points, model, library):
+        self.pointToProfile = points[0]
 
-        self.removeClosedLayers(model1)
-        if self.pointstoDraw == None:
+        self.removeClosedLayers(model)
+        if self.pointToProfile == None:
             return
         PlottingTool().clearData(self.dockwidget, self.profiles, library)
         self.profiles = []
-        #if vertline:                        #Plotting vertical lines at the node of polyline draw
-        #    PlottingTool().drawVertLine(self.dockwidget, self.pointstoDraw, library)
-
+        
         #creating the plots of profiles
-        for i in range(0 , model1.rowCount()):
-            self.profiles.append( {"layer": model1.item(i,3).data(Qt.EditRole) } )
-            #self.profiles[i]["band"] = model1.item(i,3).data(Qt.EditRole) - 1
-            self.profiles[i] = DataReaderTool().dataReaderTool(self.iface, self.tool, self.profiles[i], self.pointstoDraw[0])
-        PlottingTool().attachCurves(self.dockwidget, self.profiles, model1, library)
+        for i in range(0 , model.rowCount()):
+            self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
+            self.profiles[i]["z"] = []
+            self.profiles[i]["l"] = []
+            layer = self.profiles[i]["layer"]
+
+            if layer:
+                try:
+                    point = self.tool.toLayerCoordinates(layer , QgsPoint(self.pointToProfile[0],self.pointToProfile[1]))
+                    ident = layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue )
+                except:
+                    ident = None
+            else:
+                ident = None
+            #if ident is not None and ident.has_key(choosenBand+1):
+            if ident is not None:
+                self.profiles[i]["z"] = ident.results().values()
+                self.profiles[i]["l"] = ident.results().keys()
+        
+        PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
-        self.setupTableTab(model1)
+        self.setupTableTab(model)
 
     # The code is based on the approach of ZonalStatistics from Processing toolbox 
     def calculatePolygonProfile(self, geometry, crs, model, library):
