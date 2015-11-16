@@ -90,7 +90,7 @@ class DoProfile(QWidget):
         #creating the plots of profiles
         for i in range(0 , model.rowCount()):
             self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
-            self.profiles[i]["z"] = []
+            self.profiles[i]["zValue"] = []
             self.profiles[i]["l"] = []
             layer = self.profiles[i]["layer"]
 
@@ -104,11 +104,11 @@ class DoProfile(QWidget):
                 ident = None
             #if ident is not None and ident.has_key(choosenBand+1):
             if ident is not None:
-                self.profiles[i]["z"] = ident.results().values()
+                self.profiles[i]["zValue"] = ident.results().values()
                 self.profiles[i]["l"] = ident.results().keys()
         
-        PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
-        PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
+        PlottingTool().attachCurves(self.dockwidget, self.profiles, "zValue", model, library)
+        #PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
         self.setupTableTab(model)
 
     # The code is based on the approach of ZonalStatistics from Processing toolbox 
@@ -123,8 +123,9 @@ class DoProfile(QWidget):
         #creating the plots of profiles
         for i in range(0 , model.rowCount()):
             self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
-            self.profiles[i]["z"] = []
             self.profiles[i]["l"] = []
+            for statistic in ["min", "max", "mean", "std", "range", "sum", "count", "unique", "var", "median"]:
+                self.profiles[i][statistic] = []
             
             # Get intersection between polygon geometry and raster following ZonalStatistics code
             rasterDS = gdal.Open(self.profiles[i]["layer"].source(), gdal.GA_ReadOnly)
@@ -200,16 +201,25 @@ class DoProfile(QWidget):
                          mask=np.logical_or(srcArray == noData,
                          np.logical_not(rasterizedArray)))
                 
-                self.profiles[i]["z"].append(float(masked.mean()))
                 self.profiles[i]["l"].append(bandNumber)
-                
+                self.profiles[i]["min"].append(float(masked.min()))
+                self.profiles[i]["max"].append(float(masked.max()))
+                self.profiles[i]["mean"].append(float(masked.mean()))
+                self.profiles[i]["std"].append(float(masked.std()))
+                self.profiles[i]["range"].append(float(masked.max()) - float(masked.min()))
+                self.profiles[i]["sum"].append(float(masked.sum()))
+                self.profiles[i]["count"].append(float(masked.count()))
+                self.profiles[i]["unique"].append(np.unique(masked.compressed()).size)
+                self.profiles[i]["var"].append(float(masked.var()))
+                self.profiles[i]["median"].append(float(np.ma.median(masked)))
+            
             memVDS = None
             rasterizedDS = None
         
         rasterDS = None
         
-        PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
-        PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
+        PlottingTool().attachCurves(self.dockwidget, self.profiles, "mean", model, library)
+        #PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
         self.setupTableTab(model)    
 
     def mapToPixel(self, mX, mY, geoTransform):
@@ -242,7 +252,7 @@ class DoProfile(QWidget):
             sizePolicy.setHeightForWidth(self.groupBox[i].sizePolicy().hasHeightForWidth())
             self.groupBox[i].setSizePolicy(sizePolicy)
             self.groupBox[i].setMinimumSize(QSize(0, 150))
-            self.groupBox[i].setMaximumSize(QSize(16777215, 150))
+            self.groupBox[i].setMaximumSize(QSize(16777215, 350))
             self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiles[i]["layer"].name(), None, QApplication.UnicodeUTF8))
             self.groupBox[i].setObjectName("groupBox" + str(i))
 
@@ -252,13 +262,20 @@ class DoProfile(QWidget):
             self.tableView.append( QTableView(self.groupBox[i]) )
             self.tableView[i].setObjectName("tableView" + str(i))
             font = QFont("Arial", 8)
-            column = len(self.profiles[i]["l"])
-            self.mdl = QStandardItemModel(2, column)
-            for j in range(len(self.profiles[i]["l"])):
-                self.mdl.setData(self.mdl.index(0, j, QModelIndex())  ,self.profiles[i]["l"][j])
-                self.mdl.setData(self.mdl.index(0, j, QModelIndex())  ,font ,Qt.FontRole)
-                self.mdl.setData(self.mdl.index(1, j, QModelIndex())  ,self.profiles[i]["z"][j])
-                self.mdl.setData(self.mdl.index(1, j, QModelIndex())  ,font ,Qt.FontRole)
+            columns = len(self.profiles[i]["l"])
+            rowNames = self.profiles[i].keys()
+            rowNames.remove("layer") # holds the QgsMapLayer instance
+            rowNames.remove("l") # holds the band number
+            rows = len(rowNames)
+            self.mdl = QStandardItemModel(rows+1, columns)
+            self.mdl.setVerticalHeaderLabels(["band"] + rowNames)
+            for j in range(columns):
+                self.mdl.setData(self.mdl.index(0, j, QModelIndex()), self.profiles[i]["l"][j])
+                self.mdl.setData(self.mdl.index(0, j, QModelIndex()), font ,Qt.FontRole)
+                for k in range(rows):
+                    self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), self.profiles[i][rowNames[k]][j])
+                    self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), font ,Qt.FontRole)
+            #self.tableView[i].setVerticalHeaderLabels(rowNames)
             self.tableView[i].verticalHeader().setDefaultSectionSize(18)
             self.tableView[i].horizontalHeader().setDefaultSectionSize(60)
             self.tableView[i].setModel(self.mdl)
@@ -286,9 +303,18 @@ class DoProfile(QWidget):
     def copyTable(self):                            #Writing the table to clipboard in excel form
         nr = int( self.sender().objectName() )
         self.clipboard = QApplication.clipboard()
-        text = ""
+        text = "band"
+        rowNames = self.profiles[nr].keys()
+        rowNames.remove("layer")
+        rowNames.remove("l")
+        for name in rowNames:
+            text += "\t"+name
+        text += "\n"
         for i in range( len(self.profiles[nr]["l"]) ):
-            text += str(self.profiles[nr]["l"][i]) + "\t" + str(self.profiles[nr]["z"][i]) + "\n"
+            text += str(self.profiles[nr]["l"][i])
+            for j in range(len(rowNames)):
+                text += "\t" + str(self.profiles[nr][rowNames[j]][i])
+            text += "\n"
         self.clipboard.setText(text)
 
 

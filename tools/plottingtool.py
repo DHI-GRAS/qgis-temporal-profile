@@ -107,7 +107,7 @@ class PlottingTool:
 
 
 
-    def attachCurves(self, wdg, profiles, model1, library):
+    def attachCurves(self, wdg, profiles, profileName, model1, library):
         if library == "Qwt5" and has_qwt:
             for i in range(0 , model1.rowCount()):
                 tmp_name = ("%s#") % (profiles[i]["layer"].name())
@@ -116,7 +116,7 @@ class PlottingTool:
                 # with breaks wherever data is None.
                 # Prepare two lists of coordinates (xx and yy). Make x=None whenever y==None.
                 xx = profiles[i]["l"]
-                yy = profiles[i]["z"]
+                yy = profiles[i][profileName]
                 for j in range(len(yy)):
                     if yy[j] is None:
                         xx[j] = None
@@ -140,7 +140,7 @@ class PlottingTool:
                 #scaling this
                 try:
                     wdg.setAxisScale(2,0,max(profiles[len(profiles) - 1]["l"]),0)
-                    self.reScalePlot(wdg, profiles, library)
+                    self.reScalePlot(wdg, profiles, profileName, library)
                 except:
                     pass
                     #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
@@ -151,12 +151,12 @@ class PlottingTool:
                 tmp_name = ("%s#") % (profiles[i]["layer"].name())
 
                 if model1.item(i,0).data(Qt.CheckStateRole):
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i]["z"], gid = tmp_name, linewidth = 3, visible = True)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i][profileName], gid = tmp_name, linewidth = 3, visible = True)
                 else:
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i]["z"], gid = tmp_name, linewidth = 3, visible = False)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i][profileName], gid = tmp_name, linewidth = 3, visible = False)
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), tmp_name)
                 try:
-                    self.reScalePlot(wdg, profiles, library)
+                    self.reScalePlot(wdg, profiles, profileName, library)
                     wdg.plotWdg.figure.get_axes()[0].set_xbound( 1, max(profiles[len(profiles) - 1]["l"]) )
                 except:
                     pass
@@ -165,19 +165,19 @@ class PlottingTool:
             wdg.plotWdg.draw()
 
 
-    def findMin(self,profiles, nr):
-        minVal = min( z for z in profiles[nr]["z"] if z is not None )
-        maxVal = max( profiles[nr]["z"] )
+    def findMin(self,profiles, profileName, nr):
+        minVal = min( z for z in profiles[nr][profileName] if z is not None )
+        maxVal = max( profiles[nr][profileName] )
         d = ( maxVal - minVal ) or 1
         return minVal - d*0.05
 
-    def findMax(self,profiles, nr):
-        minVal = min( z for z in profiles[nr]["z"] if z is not None )
-        maxVal = max( profiles[nr]["z"] )
+    def findMax(self,profiles, profileName, nr):
+        minVal = min( z for z in profiles[nr][profileName] if z is not None )
+        maxVal = max( profiles[nr][profileName] )
         d = ( maxVal - minVal ) or 1
         return maxVal + d*0.05
 
-    def reScalePlot(self, wdg, profiles, library):                         # called when spinbox value changed
+    def reScalePlot(self, wdg, profiles, profileName, library):                         # called when spinbox value changed
         if profiles == None:
             return
         minimumValue = wdg.sbMinVal.value()
@@ -187,11 +187,11 @@ class PlottingTool:
             minimumValue = 1000000000
             maximumValue = -1000000000
             for i in range(0,len(profiles)):
-                if profiles[i]["layer"] != None and len([z for z in profiles[i]["z"] if z is not None]) > 0:
+                if profiles[i]["layer"] != None and len([z for z in profiles[i][profileName] if z is not None]) > 0:
                     if self.findMin(profiles, i) < minimumValue:
-                        minimumValue = self.findMin(profiles, i)
+                        minimumValue = self.findMin(profiles, profileName, i)
                     if self.findMax(profiles, i) > maximumValue:
-                        maximumValue = self.findMax(profiles, i)
+                        maximumValue = self.findMax(profiles, profileName, i)
             wdg.sbMaxVal.setValue(maximumValue)
             wdg.sbMinVal.setValue(minimumValue)
             wdg.sbMaxVal.setEnabled(True)
@@ -213,8 +213,9 @@ class PlottingTool:
         if library == "Qwt5" and has_qwt:
             wdg.plotWdg.clear()
             for i in range(0,len(profiles)):
-                profiles[i]["l"] = []
-                profiles[i]["z"] = []
+                profileNames = profiles[i].keys()
+                for name in profileNames:
+                    profiles[i][name] = []
             temp1 = wdg.plotWdg.itemList()
             for j in range(len(temp1)):
                 if temp1[j].rtti() == QwtPlotItem.Rtti_PlotCurve:
