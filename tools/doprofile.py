@@ -40,6 +40,8 @@ from qgis.core import *
 from plottingtool import PlottingTool
 
 from math import sqrt
+from osgeo import gdal, ogr
+import numpy as np
 #from profilebase import Ui_ProfileBase
 from dataReaderTool import DataReaderTool
 import platform
@@ -81,7 +83,7 @@ class DoProfile(QWidget):
                 self.removeClosedLayers(model1)
                 break
 
-    def calculateProfil(self, points1, model1, library, vertline = True):
+    def calculatePointProfile(self, points1, model1, library, vertline = True):
         self.pointstoDraw = points1
 
         self.removeClosedLayers(model1)
@@ -99,7 +101,115 @@ class DoProfile(QWidget):
             self.profiles[i] = DataReaderTool().dataReaderTool(self.iface, self.tool, self.profiles[i], self.pointstoDraw[0])
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model1, library)
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
+        self.setupTableTab(model1)
 
+    # The code is based on the approach of ZonalStatistics from Processing toolbox 
+    def calculatePolygonProfile(self, geometry, crs, model, library):
+        self.removeClosedLayers(model)
+        if geometry is None or geometry.isEmpty():
+            return
+        
+        PlottingTool().clearData(self.dockwidget, self.profiles, library)
+        self.profiles = []
+
+        #creating the plots of profiles
+        for i in range(0 , model.rowCount()):
+            self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
+            self.profiles[i]["z"] = []
+            self.profiles[i]["l"] = []
+            
+            # Get intersection between polygon geometry and raster following ZonalStatistics code
+            rasterDS = gdal.Open(self.profiles[i]["layer"].source(), gdal.GA_ReadOnly)
+            geoTransform = rasterDS.GetGeoTransform()
+            
+    
+            cellXSize = abs(geoTransform[1])
+            cellYSize = abs(geoTransform[5])
+            rasterXSize = rasterDS.RasterXSize
+            rasterYSize = rasterDS.RasterYSize
+    
+            rasterBBox = QgsRectangle(geoTransform[0], geoTransform[3] - cellYSize
+                                      * rasterYSize, geoTransform[0] + cellXSize
+                                      * rasterXSize, geoTransform[3])
+            rasterGeom = QgsGeometry.fromRect(rasterBBox)
+            
+            memVectorDriver = ogr.GetDriverByName('Memory')
+            memRasterDriver = gdal.GetDriverByName('MEM')
+            
+            intersectedGeom = rasterGeom.intersection(geometry)
+            ogrGeom = ogr.CreateGeometryFromWkt(intersectedGeom.exportToWkt())
+            
+            bbox = intersectedGeom.boundingBox()
+
+            xMin = bbox.xMinimum()
+            xMax = bbox.xMaximum()
+            yMin = bbox.yMinimum()
+            yMax = bbox.yMaximum()
+
+            (startColumn, startRow) = self.mapToPixel(xMin, yMax, geoTransform)
+            (endColumn, endRow) = self.mapToPixel(xMax, yMin, geoTransform)
+
+            width = endColumn - startColumn
+            height = endRow - startRow
+
+            if width == 0 or height == 0:
+                return
+
+            srcOffset = (startColumn, startRow, width, height)
+
+            newGeoTransform = (
+                geoTransform[0] + srcOffset[0] * geoTransform[1],
+                geoTransform[1],
+                0.0,
+                geoTransform[3] + srcOffset[1] * geoTransform[5],
+                0.0,
+                geoTransform[5],
+            )
+            
+            # Create a temporary vector layer in memory
+            memVDS = memVectorDriver.CreateDataSource('out')
+            memLayer = memVDS.CreateLayer('poly', crs, ogr.wkbPolygon)
+
+            ft = ogr.Feature(memLayer.GetLayerDefn())
+            ft.SetGeometry(ogrGeom)
+            memLayer.CreateFeature(ft)
+            ft.Destroy()
+            
+            # Rasterize it
+            rasterizedDS = memRasterDriver.Create('', srcOffset[2],
+                    srcOffset[3], 1, gdal.GDT_Byte)
+            rasterizedDS.SetGeoTransform(newGeoTransform)
+            gdal.RasterizeLayer(rasterizedDS, [1], memLayer, burn_values=[1])
+            rasterizedArray = rasterizedDS.ReadAsArray()
+            
+            for bandNumber in range(1, rasterDS.RasterCount+1): 
+                rasterBand = rasterDS.GetRasterBand(bandNumber)
+                noData = rasterBand.GetNoDataValue()
+                srcArray = rasterBand.ReadAsArray(*srcOffset)
+                
+                srcArray = np.nan_to_num(srcArray)
+                masked = np.ma.MaskedArray(srcArray,
+                         mask=np.logical_or(srcArray == noData,
+                         np.logical_not(rasterizedArray)))
+                
+                self.profiles[i]["z"].append(float(masked.mean()))
+                self.profiles[i]["l"].append(bandNumber)
+                
+            memVDS = None
+            rasterizedDS = None
+        
+        rasterDS = None
+        
+        PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
+        PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
+        self.setupTableTab(model)    
+
+    def mapToPixel(self, mX, mY, geoTransform):
+        (pX, pY) = gdal.ApplyGeoTransform(
+            gdal.InvGeoTransform(geoTransform)[1], mX, mY)
+        return (int(pX), int(pY))            
+    
+    def setupTableTab(self, model1):
         #*********************** TAble tab *************************************************
         try:                                                                    #Reinitializing the table tab
             self.VLayout = self.dockwidget.scrollAreaWidgetContents.layout()

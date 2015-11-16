@@ -167,6 +167,11 @@
                  <string>Point</string>
                 </property>
                </item>
+               <item>
+                <property name="text">
+                 <string>Selected Polygon</string>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>
