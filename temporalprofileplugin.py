@@ -309,11 +309,12 @@ class TemporalSpectralProfilePlugin:
 
     #************************* tableview function ******************************************
 
-    def addLayer(self, layer1 = None):
-        if layer1 is None:
-            layer1 = self.iface.activeLayer()
-        self.tableViewTool.addLayer(self.iface, self.mdl, layer1)
-        layer1.dataChanged.connect(self.refreshPlot)
+    def addLayer(self, layer = None):
+        if layer is None:
+            layer = self.iface.activeLayer()
+        if isProfilable(layer):
+            self.tableViewTool.addLayer(self.iface, self.mdl, layer)
+            layer.dataChanged.connect(self.refreshPlot)
 
     def _onClick(self,index1):                    #action when clicking the tableview
         self.tableViewTool.onClick(self.iface, self.wdg, self.mdl, self.plotlibrary, index1)
