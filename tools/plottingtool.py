@@ -148,8 +148,8 @@ class PlottingTool:
             wdg.plotWdg.replot()
         elif library == "Matplotlib" and has_mpl:
             for i in range(0 , model1.rowCount()):
-
                 tmp_name = ("%s#") % (profiles[i]["layer"].name())
+                profileName = model1.item(i,4).data(Qt.EditRole)
 
                 if model1.item(i,0).data(Qt.CheckStateRole):
                     wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i][profileName], gid = tmp_name, linewidth = 3, visible = True)
