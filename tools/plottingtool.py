@@ -110,7 +110,7 @@ class PlottingTool:
     def attachCurves(self, wdg, profiles, model1, library):
         if library == "Qwt5" and has_qwt:
             for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#") % (profiles[i]["layer"].name())
+                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), i)
                 profileName = model1.item(i,4).data(Qt.EditRole)
 
                 # As QwtPlotCurve doesn't support nodata, split the data into single lines
@@ -148,7 +148,7 @@ class PlottingTool:
             wdg.plotWdg.replot()
         elif library == "Matplotlib" and has_mpl:
             for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#") % (profiles[i]["layer"].name())
+                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), i)
                 profileName = model1.item(i,4).data(Qt.EditRole)
 
                 if model1.item(i,0).data(Qt.CheckStateRole):
@@ -252,26 +252,17 @@ class PlottingTool:
                     break
 
 
-    def changeAttachCurve(self, wdg, library, bool, name):                #Action when clicking the tableview - checkstate
+    def changeAttachCurve(self, wdg, library, isVisible, name):                #Action when clicking the tableview - checkstate
         if library == "Qwt5":
-            temp1 = wdg.plotWdg.itemList()
-            for i in range(len(temp1)):
-                if name == str(temp1[i].title().text()):
-                    curve = temp1[i]
-                    if bool:
-                        curve.setVisible(True)
-                    else:
-                        curve.setVisible(False)
+            for curve in wdg.plotWdg.itemList():
+                if name == str(curve.title().text()):
+                    curve.setVisible(isVisible)
                     wdg.plotWdg.replot()
-                    break
+                    # break  # Don't break as there may be multiple curves with a common name (segments separated with None values)
         if library == "Matplotlib":
-            temp1 = wdg.plotWdg.figure.get_axes()[0].get_lines()
-            for i in range(len(temp1)):
-                if name == str(temp1[i].get_gid()):
-                    if bool:
-                        temp1[i].set_visible(True)
-                    else:
-                        temp1[i].set_visible(False)
+            for curve in wdg.plotWdg.figure.get_axes()[0].get_lines():
+                if name == str(curve.get_gid()):
+                    curve.set_visible(isVisible)
                     wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
                     wdg.plotWdg.draw()
                     break

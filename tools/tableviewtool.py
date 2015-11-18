@@ -120,22 +120,17 @@ class TableViewTool(QObject):
         return None
 
         
-    def onClick(self, iface, wdg, mdl, plotlibrary, index1):                    #action when clicking the tableview
-        temp = mdl.itemFromIndex(index1)
-        if index1.column() == 1:                #modifying color
-            name = ("%s#") % (mdl.item(index1.row(),2).data(Qt.EditRole))
-            color = QColorDialog().getColor(temp.data(Qt.BackgroundRole))
-            mdl.setData( mdl.index(temp.row(), 1, QModelIndex())  ,color , Qt.BackgroundRole)
+    def onClick(self, iface, wdg, mdl, plotlibrary, index):                    #action when clicking the tableview
+        item = mdl.itemFromIndex(index)
+        name = ("%s#%d") % (mdl.item(index.row(),2).data(Qt.EditRole), index.row())
+        if index.column() == 1:                #modifying color
+            color = QColorDialog().getColor(item.data(Qt.BackgroundRole))
+            mdl.setData( mdl.index(item.row(), 1, QModelIndex())  ,color , Qt.BackgroundRole)
             PlottingTool().changeColor(wdg, plotlibrary, color, name)
-        elif index1.column() == 0:                #modifying checkbox
-            name = mdl.item(index1.row(),2).data(Qt.EditRole)            
-            booltemp = temp.data(Qt.CheckStateRole)
-            if booltemp == True:
-                booltemp = False
-            else:
-                booltemp = True
-            mdl.setData( mdl.index(temp.row(), 0, QModelIndex())  ,booltemp, Qt.CheckStateRole)
-            PlottingTool().changeAttachCurve(wdg, plotlibrary, booltemp, name)
+        elif index.column() == 0:                #modifying checkbox
+            isVisible = not(item.data(Qt.CheckStateRole))
+            mdl.setData( mdl.index(item.row(), 0, QModelIndex()), isVisible, Qt.CheckStateRole)
+            PlottingTool().changeAttachCurve(wdg, plotlibrary, isVisible, name)
         else:
             return
 
