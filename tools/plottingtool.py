@@ -107,10 +107,11 @@ class PlottingTool:
 
 
 
-    def attachCurves(self, wdg, profiles, profileName, model1, library):
+    def attachCurves(self, wdg, profiles, model1, library):
         if library == "Qwt5" and has_qwt:
             for i in range(0 , model1.rowCount()):
                 tmp_name = ("%s#") % (profiles[i]["layer"].name())
+                profileName = model1.item(i,4).data(Qt.EditRole)
 
                 # As QwtPlotCurve doesn't support nodata, split the data into single lines
                 # with breaks wherever data is None.

@@ -56,6 +56,8 @@ except ImportError:
 import platform
 import os
 
+
+from ComboBoxDelegate import ComboBoxDelegate
 uiFilePath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'profiletool.ui'))
 FormClass = uic.loadUiType(uiFilePath)[0]
 
@@ -66,7 +68,7 @@ class PTDockWidget(QDockWidget, FormClass):
     def __init__(self, parent, iface1, mdl1):
         QDockWidget.__init__(self, parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
-
+        self.parent = parent
         self.location = Qt.RightDockWidgetArea
         self.iface = iface1
 
@@ -74,7 +76,8 @@ class PTDockWidget(QDockWidget, FormClass):
         #self.connect(self, SIGNAL("dockLocationChanged(Qt::DockWidgetArea)"), self.setLocation)
         self.mdl = mdl1
         #self.showed = False
-
+        
+        QObject.connect(self.mdl, SIGNAL("rowsInserted(QModelIndex, int, int)"), self.addPersistentEditorForRows)
         QObject.connect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
 
     def showIt(self):
@@ -91,11 +94,12 @@ class PTDockWidget(QDockWidget, FormClass):
         self.tableView.setColumnWidth(0, 20)
         self.tableView.setColumnWidth(1, 20)
         self.tableView.setColumnWidth(2, 150)
+        self.tableView.setColumnHidden(3 , True)
+        self.tableView.setColumnWidth(4, 30)
+        self.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self.tableView, ["value"]))
         hh = self.tableView.horizontalHeader()
         hh.setStretchLastSection(True)
-        self.tableView.setColumnHidden(3 , True)
-        self.mdl.setHorizontalHeaderLabels(["","","Layer"])
-        #self.checkBox.setEnabled(False)
+        self.mdl.setHorizontalHeaderLabels(["","","Layer","", "Stat"])
 
         #The ploting area
         self.plotWdg = None
@@ -103,10 +107,18 @@ class PTDockWidget(QDockWidget, FormClass):
         self.iface.addDockWidget(self.location, self)
         self.iface.mapCanvas().setRenderFlag(True)
 
+    def addPersistentEditorForRows(self, parent, startRow, endRow):
+        for row in range(startRow, endRow+1):
+            self.tableView.openPersistentEditor(self.mdl.index(row, 4))
+        
+    def changeStatComboBoxItems(self, itemList):
+        for row in range(self.mdl.rowCount()):
+            self.tableView.closePersistentEditor(self.mdl.index(row, 4))
+        self.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self.tableView, itemList))
+        for row in range(self.mdl.rowCount()):
+            self.tableView.openPersistentEditor(self.mdl.index(row, 4))
 
     def addOptionComboboxItems(self):
-        #self.comboBox.addItem("Temporary polyline")
-        #self.comboBox.addItem("Selected polyline")
         if Qwt5_loaded:
             self.cboLibrary.addItem("Qwt5")
         if matplotlib_loaded:

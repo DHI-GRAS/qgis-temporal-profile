@@ -80,6 +80,7 @@ class DoProfile(QWidget):
 
     def calculatePointProfile(self, points, model, library):
         self.pointToProfile = points[0]
+        statName = self.getPointProfileStatNames()[0]
 
         self.removeClosedLayers(model)
         if self.pointToProfile == None:
@@ -90,7 +91,7 @@ class DoProfile(QWidget):
         #creating the plots of profiles
         for i in range(0 , model.rowCount()):
             self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
-            self.profiles[i]["zValue"] = []
+            self.profiles[i][statName] = []
             self.profiles[i]["l"] = []
             layer = self.profiles[i]["layer"]
 
@@ -104,12 +105,14 @@ class DoProfile(QWidget):
                 ident = None
             #if ident is not None and ident.has_key(choosenBand+1):
             if ident is not None:
-                self.profiles[i]["zValue"] = ident.results().values()
+                self.profiles[i][statName] = ident.results().values()
                 self.profiles[i]["l"] = ident.results().keys()
         
-        PlottingTool().attachCurves(self.dockwidget, self.profiles, "zValue", model, library)
-        #PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
+        PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
         self.setupTableTab(model)
+
+    def getPointProfileStatNames(self):
+        return ["value"]
 
     # The code is based on the approach of ZonalStatistics from Processing toolbox 
     def calculatePolygonProfile(self, geometry, crs, model, library):
@@ -124,7 +127,7 @@ class DoProfile(QWidget):
         for i in range(0 , model.rowCount()):
             self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
             self.profiles[i]["l"] = []
-            for statistic in ["min", "max", "mean", "std", "range", "sum", "count", "unique", "var", "median"]:
+            for statistic in self.getPolygonProfileStatNames():
                 self.profiles[i][statistic] = []
             
             # Get intersection between polygon geometry and raster following ZonalStatistics code
@@ -218,9 +221,11 @@ class DoProfile(QWidget):
         
         rasterDS = None
         
-        PlottingTool().attachCurves(self.dockwidget, self.profiles, "mean", model, library)
-        #PlottingTool().reScalePlot(self.dockwidget, self.profiles, library)
-        self.setupTableTab(model)    
+        PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
+        self.setupTableTab(model)
+
+    def getPolygonProfileStatNames(self):
+        return ["min", "max", "mean", "std", "range", "sum", "count", "unique", "var", "median"]
 
     def mapToPixel(self, mX, mY, geoTransform):
         (pX, pY) = gdal.ApplyGeoTransform(

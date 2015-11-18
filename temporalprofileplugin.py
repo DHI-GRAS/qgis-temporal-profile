@@ -104,7 +104,7 @@ class TemporalSpectralProfilePlugin:
 
         #if dock not already opened, open the dock and all the necessary thing (model,doProfile...)
         if self.dockOpened == False:
-            self.mdl = QStandardItemModel(0, 4)
+            self.mdl = QStandardItemModel(0, 5)
             self.wdg = PTDockWidget(self.iface.mainWindow(), self.iface, self.mdl)
             self.wdg.showIt()
             self.doprofile = DoProfile(self.iface,self.wdg,self.pointTool, self)
@@ -291,13 +291,15 @@ class TemporalSpectralProfilePlugin:
             if not self.canvas.mapTool() == self.pointTool:
                 self.canvas.setMapTool(self.pointTool)
             self.iface.mainWindow().statusBar().showMessage(self.pointSelectionInstructions)
+            self.wdg.changeStatComboBoxItems(self.doprofile.getPointProfileStatNames())
             
         elif item == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
             self.selectionmethod = TemporalSpectralProfilePlugin.SELECTED_POLYGON
             self.deactivatePointMapTool()
             self.connectSelectedPolygonsTool()
             self.iface.actionSelectRectangle().trigger()
-            self.iface.mainWindow().statusBar().showMessage(self.selectedPolygonInstructions)    
+            self.iface.mainWindow().statusBar().showMessage(self.selectedPolygonInstructions)
+            self.wdg.changeStatComboBoxItems(self.doprofile.getPolygonProfileStatNames())  
                 
     def changePlotLibrary(self, item):
         self.plotlibrary = self.wdg.cboLibrary.itemText(item)

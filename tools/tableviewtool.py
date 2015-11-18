@@ -88,6 +88,9 @@ class TableViewTool(QObject):
         mdl.item(row,2).setFlags(Qt.NoItemFlags)  
         mdl.setData( mdl.index(row, 3, QModelIndex())  ,layer2)
         mdl.item(row,3).setFlags(Qt.NoItemFlags)
+        mdl.setData(mdl.index(row, 4, QModelIndex()), "")
+        mdl.item(row,4).setFlags(Qt.NoItemFlags)
+        
         self.layerAddedOrRemoved.emit()
         
         
