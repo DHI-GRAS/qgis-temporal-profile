@@ -81,7 +81,6 @@ class PTDockWidget(QDockWidget, FormClass):
         QObject.connect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
 
     def showIt(self):
-        #self.setLocation( Qt.BottomDockWidgetArea )
         self.location = Qt.BottomDockWidgetArea
         minsize = self.minimumSize()
         maxsize = self.maximumSize()
@@ -100,6 +99,7 @@ class PTDockWidget(QDockWidget, FormClass):
         hh = self.tableView.horizontalHeader()
         hh.setStretchLastSection(True)
         self.mdl.setHorizontalHeaderLabels(["","","Layer","", "Stat"])
+        self.tableView.verticalHeader().hide()
 
         #The ploting area
         self.plotWdg = None
