@@ -31,6 +31,8 @@
 ***************************************************************************
 """
 
+from math import log10, floor
+
 from qgis.core import *
 from qgis.gui import *
 from PyQt4.QtCore import *
@@ -170,15 +172,17 @@ class PlottingTool:
         minVal = min( z for z in profiles[nr][profileName] if z is not None )
         maxVal = max( profiles[nr][profileName] )
         d = ( maxVal - minVal ) or 1
-        return minVal - d*0.05
+        minVal =  minVal - d*0.05
+        return floor(minVal) if abs(minVal) > 1 else minVal
 
     def findMax(self,profiles, profileName, nr):
         minVal = min( z for z in profiles[nr][profileName] if z is not None )
         maxVal = max( profiles[nr][profileName] )
         d = ( maxVal - minVal ) or 1
-        return maxVal + d*0.05
+        maxVal =  maxVal + d*0.05
+        return floor(maxVal) if abs(maxVal) > 1 else maxVal
 
-    def reScalePlot(self, wdg, profiles, profileName, library):                         # called when spinbox value changed
+    def reScalePlot(self, wdg, profiles, model, library):                         # called when spinbox value changed
         if profiles == None:
             return
         minimumValue = wdg.sbMinVal.value()
@@ -188,13 +192,16 @@ class PlottingTool:
             minimumValue = 1000000000
             maximumValue = -1000000000
             for i in range(0,len(profiles)):
+                profileName = model.item(i,4).data(Qt.EditRole)
                 if profiles[i]["layer"] != None and len([z for z in profiles[i][profileName] if z is not None]) > 0:
-                    if self.findMin(profiles, i) < minimumValue:
+                    if self.findMin(profiles, profileName, i) < minimumValue:
                         minimumValue = self.findMin(profiles, profileName, i)
-                    if self.findMax(profiles, i) > maximumValue:
+                    if self.findMax(profiles, profileName, i) > maximumValue:
                         maximumValue = self.findMax(profiles, profileName, i)
             wdg.sbMaxVal.setValue(maximumValue)
             wdg.sbMinVal.setValue(minimumValue)
+            wdg.sbMaxVal.setSingleStep(self.calculateSpinStep(minimumValue, maximumValue))
+            wdg.sbMinVal.setSingleStep(self.calculateSpinStep(minimumValue, maximumValue))
             wdg.sbMaxVal.setEnabled(True)
             wdg.sbMinVal.setEnabled(True)
 
@@ -207,6 +214,12 @@ class PlottingTool:
                 wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
                 wdg.plotWdg.draw()
 
+    def calculateSpinStep(self, minimum, maximum):
+        valueRange = maximum - minimum
+        if valueRange is None or valueRange <= 0:
+            return 0
+        step = valueRange / 10.0
+        return round(step, -int(floor(log10(step))))
 
     def clearData(self, wdg, profiles, library):                             # erase one of profiles
         if not profiles:

@@ -180,12 +180,12 @@
           <item row="0" column="3">
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
-             <widget class="QSpinBox" name="sbMaxVal">
+             <widget class="QDoubleSpinBox" name="sbMaxVal">
               <property name="minimum">
-               <number>-99999</number>
+               <double>-100000000.000000000000000</double>
               </property>
               <property name="maximum">
-               <number>999999</number>
+               <double>100000000.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -226,12 +226,12 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="sbMinVal">
+             <widget class="QDoubleSpinBox" name="sbMinVal">
               <property name="minimum">
-               <number>-99999</number>
+               <double>-100000000.000000000000000</double>
               </property>
               <property name="maximum">
-               <number>999999</number>
+               <double>100000000.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -347,8 +347,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>985</width>
-             <height>302</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
           </widget>

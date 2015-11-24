@@ -79,6 +79,9 @@ class DoProfile(QWidget):
                 break
 
     def calculatePointProfile(self, points, model, library):
+        self.model = model
+        self.library = library
+        
         self.pointToProfile = points[0]
         statName = self.getPointProfileStatNames()[0]
 
@@ -109,6 +112,7 @@ class DoProfile(QWidget):
                 self.profiles[i]["l"] = ident.results().keys()
         
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
+        PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
         self.setupTableTab(model)
 
     def getPointProfileStatNames(self):
@@ -116,6 +120,9 @@ class DoProfile(QWidget):
 
     # The code is based on the approach of ZonalStatistics from Processing toolbox 
     def calculatePolygonProfile(self, geometry, crs, model, library):
+        self.model = model
+        self.library = library
+        
         self.removeClosedLayers(model)
         if geometry is None or geometry.isEmpty():
             return
@@ -222,6 +229,7 @@ class DoProfile(QWidget):
         rasterDS = None
         
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
+        PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
         self.setupTableTab(model)
 
     def getPolygonProfileStatNames(self):
@@ -324,13 +332,13 @@ class DoProfile(QWidget):
 
 
     def reScalePlot(self, param):                         # called when a spinbox value changed
-        if type(param) != int:
+        if type(param) != float:    
             # don't execute it twice, for both valueChanged(int) and valueChanged(str) signals
             return
         if self.dockwidget.sbMinVal.value() == self.dockwidget.sbMaxVal.value() == 0:
             # don't execute it on init
             return
-        PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.dockwidget.cboLibrary.currentText () )
+        PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library)
 
 
     def getProfileCurve(self,nr):
