@@ -139,7 +139,7 @@ class TemporalSpectralProfilePlugin:
         if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
             self.iface.mainWindow().statusBar().showMessage(self.pointSelectionInstructions )
         elif self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
-            self.iface.mainWindow().statusBar().showMessage(self.self.selectedPolygonInstructions)
+            self.iface.mainWindow().statusBar().showMessage(self.selectedPolygonInstructions)
 
 #************************************* Canvas listener actions **********************************************
 # Use for selected polygon option
