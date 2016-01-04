@@ -8,13 +8,17 @@ about =
  
 	This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa. Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
 category=Raster
-version=1.0.1
-qgisMinimumVersion=2.0
+version=1.1.0
+qgisMinimumVersion=2.12
 
 author=Radoslaw Guzinski
 email=rmgu@dhi-gras.com
 
-#changelog= 1.0.1
+changelog=1.1.0
+	- Add option for plotting zonal statistics' temporal/spectral profiles
+	- Small GUI adjustments to maintain the same look as Profile Tool
+	- Bug fixes 
+	1.0.1
 	- Update metadata.txt
 
 ; tags are in comma separated value format, spaces are allowed

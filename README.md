@@ -15,6 +15,10 @@ It can also be used to plot pixel time-series data from a list of rasters which 
 
 ![](https://github.com/TIGER-NET/screenshots/blob/master/Temporal_profile_tool/temporal_profile.png)
 
+New functionality in version 1.1 allows the plotting of zonal statistics' time-series by using the "Selected Polygon" option and choosing the statistic to plot from a list next to the raster layer name:
+
+![](https://github.com/TIGER-NET/screenshots/blob/master/Temporal_profile_tool/temporal_profile_polygon.png)
+
 The information can be presented either as a graph (profile) or in tabular form using the tabs at the top of the tool. It is also possible to save the graph as a pdf or an image using the buttons below the graph, as well as to change some graph properties if Matplotlib is used as the plotting library.
 
 This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa.
