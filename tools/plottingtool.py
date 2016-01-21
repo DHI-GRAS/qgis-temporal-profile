@@ -31,7 +31,7 @@
 ***************************************************************************
 """
 
-from math import log10, floor
+from math import log10, floor, ceil
 
 from qgis.core import *
 from qgis.gui import *
@@ -180,7 +180,7 @@ class PlottingTool:
         maxVal = max( profiles[nr][profileName] )
         d = ( maxVal - minVal ) or 1
         maxVal =  maxVal + d*0.05
-        return floor(maxVal) if abs(maxVal) > 1 else maxVal
+        return ceil(maxVal) if abs(maxVal) > 1 else maxVal
 
     def reScalePlot(self, wdg, profiles, model, library):                         # called when spinbox value changed
         if profiles == None:
