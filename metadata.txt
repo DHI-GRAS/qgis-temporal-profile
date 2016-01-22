@@ -8,13 +8,16 @@ about =
  
 	This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa. Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
 category=Raster
-version=1.1.0
+version=1.1.1
 qgisMinimumVersion=2.12
 
 author=Radoslaw Guzinski
-email=rmgu@dhi-gras.com
+email=radosuav@op.pl
 
-changelog=1.1.0
+changelog=1.1.1
+	- Fix y-axis extent
+	- Update code repository in metadata file
+	1.1.0
 	- Add option for plotting zonal statistics' temporal/spectral profiles
 	- Small GUI adjustments to maintain the same look as Profile Tool
 	- Bug fixes 
@@ -28,9 +31,9 @@ tags=raster,profile,timeseries,spectral
 ; in a future version of the web application it will
 ; be probably possible to create a project on redmine
 ; if they are not filled
-homepage= http://www.tiger-net.org
-tracker= https://github.com/TIGER-NET/Temporal_profile_tool/issues
-repository= https://github.com/TIGER-NET/Temporal_profile_tool
+homepage= https://github.com/DHI-GRAS/Temporal_profile_tool
+tracker= https://github.com/DHI-GRAS/Temporal_profile_tool/issues
+repository= https://github.com/DHI-GRAS/Temporal_profile_tool
 icon=icons/temporalProfileIcon.png
 
 ; experimental flag
