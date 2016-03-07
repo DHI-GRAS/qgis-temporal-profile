@@ -236,8 +236,15 @@ class DoProfile(QWidget):
         return ["min", "max", "mean", "std", "range", "sum", "count", "unique", "var", "median"]
 
     def mapToPixel(self, mX, mY, geoTransform):
-        (pX, pY) = gdal.ApplyGeoTransform(
-            gdal.InvGeoTransform(geoTransform)[1], mX, mY)
+        # GDAL 1.x
+        try:
+            (pX, pY) = gdal.ApplyGeoTransform(
+                gdal.InvGeoTransform(geoTransform)[1], mX, mY)
+        # GDAL 2.x
+        except TypeError:
+            (pX, pY) = gdal.ApplyGeoTransform(
+                gdal.InvGeoTransform(geoTransform), mX, mY)
+            
         return (int(pX), int(pY))            
     
     def setupTableTab(self, model1):
