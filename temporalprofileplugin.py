@@ -140,10 +140,22 @@ class TemporalSpectralProfilePlugin:
             self.iface.mainWindow().statusBar().showMessage(self.pointSelectionInstructions )
         elif self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
             self.iface.mainWindow().statusBar().showMessage(self.selectedPolygonInstructions)
+            
+        QObject.connect(QgsMapLayerRegistry.instance(), SIGNAL("layersWillBeRemoved (QStringList)"), self.onLayersWillBeRemoved)
 
 #************************************* Canvas listener actions **********************************************
-# Use for selected polygon option
+    
+    # Used when layer is about to be removed from QGIS Map Layer Registry
+    def onLayersWillBeRemoved(self, layersIds):
+        for layerId in layersIds:
+            for row in range(self.mdl.rowCount()):
+                if layerId == self.mdl.index(row, 3).data().id():
+                    self.removeLayer(row)
+                    self.onLayersWillBeRemoved(layersIds)
+                    break
+                    
 
+    # Use for selected polygon option
     def selectionChanged(self, layer):
         if not layer.geometryType() == QGis.Polygon:
             return
@@ -274,6 +286,7 @@ class TemporalSpectralProfilePlugin:
         self.deactivagteSelectedPolygonsTools() 
         self.deactivatePointMapTool()
         QObject.disconnect(self.wdg.comboBox, SIGNAL("currentIndexChanged(int)"), self.selectionMethod)
+        QObject.disconnect(QgsMapLayerRegistry.instance(), SIGNAL("layersWillBeRemoved (QStringList)"), self.onLayersWillBeRemoved)
         self.tableViewTool.layerAddedOrRemoved.disconnect(self.refreshPlot)
         self.mdl = None
         self.dockOpened = False
@@ -325,9 +338,12 @@ class TemporalSpectralProfilePlugin:
         
         if index is not None:
             layer = self.mdl.index(index, 3).data()
-            layer.dataChanged.disconnect(self.refreshPlot)
+            try:
+                layer.dataChanged.disconnect(self.refreshPlot)
+            # In case the same layer is added multiple times to the tool 
+            except TypeError:
+                pass
             self.tableViewTool.removeLayer(self.mdl, index)
-
 
     def about(self):
         from ui.dlgabout import DlgAbout
