@@ -8,13 +8,16 @@ about =
  
 	This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa. Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
 category=Raster
-version=1.1.1
+version=1.1.2
 qgisMinimumVersion=2.12
 
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=1.1.1
+changelog=1.1.2
+	- Fix GDAL 2.x compatibility
+	- Improved handling of removal of layers from map canvas
+	1.1.1
 	- Fix y-axis extent
 	- Update code repository in metadata file
 	1.1.0
