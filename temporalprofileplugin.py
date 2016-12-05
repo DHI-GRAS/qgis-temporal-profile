@@ -312,7 +312,7 @@ class TemporalSpectralProfilePlugin:
             self.connectSelectedPolygonsTool()
             self.iface.actionSelectRectangle().trigger()
             self.iface.mainWindow().statusBar().showMessage(self.selectedPolygonInstructions)
-            self.wdg.changeStatComboBoxItems(self.doprofile.getPolygonProfileStatNames())  
+            self.wdg.changeStatComboBoxItems(self.doprofile.getPolygonProfileStatNames(), "mean")  
                 
     def changePlotLibrary(self, item):
         self.plotlibrary = self.wdg.cboLibrary.itemText(item)

@@ -111,10 +111,11 @@ class PTDockWidget(QDockWidget, FormClass):
         for row in range(startRow, endRow+1):
             self.tableView.openPersistentEditor(self.mdl.index(row, 4))
         
-    def changeStatComboBoxItems(self, itemList):
+    def changeStatComboBoxItems(self, itemList, defaultStat = ""):
         for row in range(self.mdl.rowCount()):
             self.tableView.closePersistentEditor(self.mdl.index(row, 4))
-        self.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self.tableView, itemList))
+        statComboBoxDelegate = ComboBoxDelegate(self.tableView, itemList, defaultStat)
+        self.tableView.setItemDelegateForColumn(4,statComboBoxDelegate)
         for row in range(self.mdl.rowCount()):
             self.tableView.openPersistentEditor(self.mdl.index(row, 4))
 
@@ -124,13 +125,10 @@ class PTDockWidget(QDockWidget, FormClass):
         if matplotlib_loaded:
             self.cboLibrary.addItem("Matplotlib")
 
-
-
     def closeEvent(self, event):
         self.emit( SIGNAL( "closed(PyQt_PyObject)" ), self )
         QObject.disconnect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
         return QDockWidget.closeEvent(self, event)
-
 
     def addPlotWidget(self, library):
         layout = self.frame_for_plot.layout()

@@ -35,9 +35,10 @@ from PyQt4.QtGui import *
 
 class ComboBoxDelegate(QItemDelegate):
 
-    def __init__(self, parent, itemList):
+    def __init__(self, parent, itemList, defaultItem = ""):
         QItemDelegate.__init__(self, parent)
         self.itemList = itemList
+        self.defaultItem = defaultItem
     
     def createEditor(self, parent, option, index):
         editor = QComboBox(parent)
@@ -49,9 +50,11 @@ class ComboBoxDelegate(QItemDelegate):
         value = index.model().data(index, Qt.EditRole)
         if editor.findText(value) >= 0:
             editor.setCurrentIndex(editor.findText(value))
+        elif editor.findText(self.defaultItem) >= 0:
+           editor.setCurrentIndex(editor.findText(self.defaultItem))  
         else:
             editor.setCurrentIndex(0)
-            self.setModelData(editor, index.model(), index)
+        self.setModelData(editor, index.model(), index)
 
     def setModelData(self, editor, model, index):
         value = editor.currentText()
