@@ -204,8 +204,14 @@ class DoProfile(QWidget):
             for bandNumber in range(1, rasterDS.RasterCount+1): 
                 rasterBand = rasterDS.GetRasterBand(bandNumber)
                 noData = rasterBand.GetNoDataValue()
+                scale = rasterBand.GetScale()
+                if scale is None:
+                    scale = 1.0
+                offset = rasterBand.GetOffset()
+                if offset is None:
+                    offset = 0.0
                 srcArray = rasterBand.ReadAsArray(*srcOffset)
-                srcArray = srcArray*rasterBand.GetScale()+rasterBand.GetOffset() 
+                srcArray = srcArray*scale+offset 
                 srcArray = np.nan_to_num(srcArray)
                 masked = np.ma.MaskedArray(srcArray,
                          mask=np.logical_or(srcArray == noData,
