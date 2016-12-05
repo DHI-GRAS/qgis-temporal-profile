@@ -204,25 +204,31 @@ class DoProfile(QWidget):
             for bandNumber in range(1, rasterDS.RasterCount+1): 
                 rasterBand = rasterDS.GetRasterBand(bandNumber)
                 noData = rasterBand.GetNoDataValue()
+                scale = rasterBand.GetScale()
+                if scale is None:
+                    scale = 1.0
+                offset = rasterBand.GetOffset()
+                if offset is None:
+                    offset = 0.0
                 srcArray = rasterBand.ReadAsArray(*srcOffset)
-                srcArray = srcArray*rasterBand.GetScale()+rasterBand.GetOffset() 
+                srcArray = srcArray*scale+offset 
                 srcArray = np.nan_to_num(srcArray)
                 masked = np.ma.MaskedArray(srcArray,
                          mask=np.logical_or(srcArray == noData,
                          np.logical_not(rasterizedArray)))
                 
                 self.profiles[i]["l"].append(bandNumber)
-                self.profiles[i]["min"].append(float(masked.min()))
+                self.profiles[i]["count"].append(float(masked.count()))
                 self.profiles[i]["max"].append(float(masked.max()))
                 self.profiles[i]["mean"].append(float(masked.mean()))
-                self.profiles[i]["std"].append(float(masked.std()))
+                self.profiles[i]["median"].append(float(np.ma.median(masked)))
+                self.profiles[i]["min"].append(float(masked.min()))
                 self.profiles[i]["range"].append(float(masked.max()) - float(masked.min()))
+                self.profiles[i]["std"].append(float(masked.std()))
                 self.profiles[i]["sum"].append(float(masked.sum()))
-                self.profiles[i]["count"].append(float(masked.count()))
                 self.profiles[i]["unique"].append(np.unique(masked.compressed()).size)
                 self.profiles[i]["var"].append(float(masked.var()))
-                self.profiles[i]["median"].append(float(np.ma.median(masked)))
-            
+                
             memVDS = None
             rasterizedDS = None
         
@@ -233,7 +239,7 @@ class DoProfile(QWidget):
         self.setupTableTab(model)
 
     def getPolygonProfileStatNames(self):
-        return ["min", "max", "mean", "std", "range", "sum", "count", "unique", "var", "median"]
+        return ["count", "max", "mean", "median", "min", "range", "std", "sum", "unique", "var"]
 
     def mapToPixel(self, mX, mY, geoTransform):
         # GDAL 1.x
