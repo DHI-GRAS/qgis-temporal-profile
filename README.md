@@ -21,6 +21,14 @@ New functionality in version 1.1 allows the plotting of zonal statistics' time-s
 
 The information can be presented either as a graph (profile) or in tabular form using the tabs at the top of the tool. It is also possible to save the graph as a pdf or an image using the buttons below the graph, as well as to change some graph properties if Matplotlib is used as the plotting library.
 
+New functionality in version 1.2 allows for changing the x-axis steps. They can either remain as band numbers (as was the case in previous versions), or be set based on string or based on regular time-steps. 
+
+![](https://github.com/TIGER-NET/screenshots/blob/master/Temporal_profile_tool/temporal_profile_xaxis_steps.png)
+
+The string for setting the x-axis steps must contain only numbers (including "nan") delimited by ";". The number of steps will be truncated to the minimum of the number of steps in the string and the number of bands in the raster. It is possible to skip a raster band during plotting by setting the corresponding step to "nan".
+
+The time-step option only works if Matplotlib is chosen as the plotting library. A time step of "months" is approximated as 365/12 days and a time step of "years" is approximated as 365 days.
+
 This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa.
 
 Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
