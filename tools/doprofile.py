@@ -31,6 +31,8 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+import math
+from datetime import datetime, timedelta
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -49,6 +51,7 @@ class DoProfile(QWidget):
     def __init__(self, iface, dockwidget1 , tool1 , plugin, parent = None):
         QWidget.__init__(self, parent)
         self.profiles = None        #dictionary where is saved the plotting data {"l":[l],"z":[z], "layer":layer1, "curve":curve1}
+        self.xAxisSteps = None
         self.iface = iface
         self.tool = tool1
         self.dockwidget = dockwidget1
@@ -111,6 +114,7 @@ class DoProfile(QWidget):
                 self.profiles[i][statName] = ident.results().values()
                 self.profiles[i]["l"] = ident.results().keys()
         
+        self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
         self.setupTableTab(model)
@@ -234,6 +238,7 @@ class DoProfile(QWidget):
         
         rasterDS = None
         
+        self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
         self.setupTableTab(model)
@@ -241,6 +246,46 @@ class DoProfile(QWidget):
     def getPolygonProfileStatNames(self):
         return ["count", "max", "mean", "median", "min", "range", "std", "sum", "unique", "var"]
 
+    def setXAxisSteps(self):
+        if self.xAxisSteps == None:
+            return
+        
+        elif self.xAxisSteps[0] == "Timesteps":
+            for profile in self.profiles:
+                stepsNum = len(profile["l"])
+                startTime = self.xAxisSteps[1]
+                step = self.xAxisSteps[2]
+                stepType = self.xAxisSteps[3]
+                if stepType == "years":
+                    stepType = "days"
+                    step = step * 365
+                elif stepType == "months":
+                    stepType = "days"
+                    step = step * 365/12
+
+                profile["l"] = []
+                for i in range(stepsNum):
+                    timedeltaParams = {stepType: step*i}
+                    profile["l"].append(startTime + timedelta(**timedeltaParams))
+        else:
+            for profile in self.profiles:
+                # Truncate the profiles to the minimum of the length of each profile
+                # or length of provided x-axis steps
+                stepsNum = min(len(self.xAxisSteps), len(profile["l"]))
+                profile["l"] = self.xAxisSteps[:stepsNum]
+                for stat in profile.keys():
+                    if stat == "l" or stat == "layer":
+                        continue
+                    profile[stat] = profile[stat][:stepsNum]
+                    
+                # If any x-axis step is a NaN then remove the corresponding
+                # value from profile
+                nans = [i for i, x in enumerate(profile["l"]) if math.isnan(x)]
+                for stat in profile.keys():
+                    if stat == "layer":
+                        continue
+                    profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
+    
     def mapToPixel(self, mX, mY, geoTransform):
         # GDAL 1.x
         try:

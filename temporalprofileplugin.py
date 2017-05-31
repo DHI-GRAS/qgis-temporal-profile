@@ -115,6 +115,11 @@ class TemporalSpectralProfilePlugin:
             QObject.connect(self.wdg.pushButton, SIGNAL("clicked()"), self.removeLayer)
             QObject.connect(self.wdg.comboBox, SIGNAL("currentIndexChanged(int)"), self.selectionMethod)
             QObject.connect(self.wdg.cboLibrary, SIGNAL("currentIndexChanged(int)"), self.changePlotLibrary)
+            QObject.connect(self.wdg.cboXAxis, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
+            QObject.connect(self.wdg.leXAxisSteps, SIGNAL("editingFinished()"), self.changeXAxisLabeling)
+            QObject.connect(self.wdg.dateTimeEditCurrentTime, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
+            QObject.connect(self.wdg.spinBoxTimeExtent, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
+            QObject.connect(self.wdg.cboTimeExtent, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)            
             self.tableViewTool.layerAddedOrRemoved.connect(self.refreshPlot)
             self.wdg.addOptionComboboxItems()
             self.addLayer()    
@@ -317,7 +322,36 @@ class TemporalSpectralProfilePlugin:
     def changePlotLibrary(self, item):
         self.plotlibrary = self.wdg.cboLibrary.itemText(item)
         self.wdg.addPlotWidget(self.plotlibrary)
-
+        self.changeXAxisLabeling()
+        
+    def changeXAxisLabeling(self):
+        self.xAxisSteps = {}
+        # default band number labeling
+        if self.wdg.cboXAxis.currentIndex() == 0:
+            self.doprofile.xAxisSteps = None
+        # Labels from string
+        elif self.wdg.cboXAxis.currentIndex() == 1:
+            self.doprofile.xAxisSteps = self.wdg.leXAxisSteps.text().split(';')
+            try:
+                self.doprofile.xAxisSteps = [ float(x) for x in self.doprofile.xAxisSteps ]
+            except ValueError:
+                self.doprofile.xAxisSteps = None
+                text = "Temporal/Spectral Profile Tool: The X-axis steps' string " + \
+                              "is invalid. Using band numbers instead."
+                self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                                                   QgsMessageBar.WARNING, 5)
+        # Labels based on time
+        elif self.wdg.cboXAxis.currentIndex() == 2: 
+            self.doprofile.xAxisSteps = ["Timesteps", 
+                                         self.wdg.dateTimeEditCurrentTime.dateTime().toPyDateTime(), 
+                                         int(self.wdg.spinBoxTimeExtent.cleanText()),
+                                         self.wdg.cboTimeExtent.currentText()]
+            if self.plotlibrary == "Qwt5":
+                text = "Temporal/Spectral Profile Tool: There is currently no support using " + \
+                              "Time steps while using the Qwt plotlibrary"
+                self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                                                   QgsMessageBar.WARNING, 5)
+                self.doprofile.xAxisSteps = None
         
 
     #************************* tableview function ******************************************
