@@ -152,12 +152,13 @@ class TemporalSpectralProfilePlugin:
     
     # Used when layer is about to be removed from QGIS Map Layer Registry
     def onLayersWillBeRemoved(self, layersIds):
-        for layerId in layersIds:
-            for row in range(self.mdl.rowCount()):
-                if layerId == self.mdl.index(row, 3).data().id():
-                    self.removeLayer(row)
-                    self.onLayersWillBeRemoved(layersIds)
-                    break
+        if self.mdl is not None:
+            for layerId in layersIds:
+                for row in range(self.mdl.rowCount()):
+                    if layerId == self.mdl.index(row, 3).data().id():
+                        self.removeLayer(row)
+                        self.onLayersWillBeRemoved(layersIds)
+                        break
                     
 
     # Use for selected polygon option
@@ -333,7 +334,7 @@ class TemporalSpectralProfilePlugin:
         elif self.wdg.cboXAxis.currentIndex() == 1:
             self.doprofile.xAxisSteps = self.wdg.leXAxisSteps.text().split(';')
             try:
-                self.doprofile.xAxisSteps = [ float(x) for x in self.doprofile.xAxisSteps ]
+               self.doprofile.xAxisSteps = [ float(x) for x in self.doprofile.xAxisSteps ]
             except ValueError:
                 self.doprofile.xAxisSteps = None
                 text = "Temporal/Spectral Profile Tool: The X-axis steps' string " + \
