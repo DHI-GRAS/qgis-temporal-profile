@@ -31,7 +31,7 @@
 ***************************************************************************
 """
 
-from math import log10, floor, ceil
+from math import log10, floor, ceil, sqrt, isnan
 
 from qgis.core import *
 from qgis.gui import *
@@ -39,7 +39,6 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtSvg import *
 import platform
-from math import sqrt
 
 has_qwt = False
 has_mpl = False
@@ -146,24 +145,35 @@ class PlottingTool:
                     self.reScalePlot(wdg, profiles, profileName, library)
                 except:
                     pass
-                    #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
             wdg.plotWdg.replot()
+            
         elif library == "Matplotlib" and has_mpl:
             for i in range(0 , model1.rowCount()):
                 tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), i)
                 profileName = model1.item(i,4).data(Qt.EditRole)
+                
+                xx = profiles[i]["l"]
+                yy = profiles[i][profileName]
+                
+                # Don't plot if there are no valid values
+                validValues = False
+                for j in range(len(yy)):
+                    if not isnan(yy[j]):
+                        validValues = True
+                        break
+                if not validValues:
+                    continue        
 
                 if model1.item(i,0).data(Qt.CheckStateRole):
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i][profileName], gid = tmp_name, linewidth = 3, visible = True)
+                    wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = tmp_name, linewidth = 3, visible = True)
                 else:
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i][profileName], gid = tmp_name, linewidth = 3, visible = False)
+                    wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = tmp_name, linewidth = 3, visible = False)
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), tmp_name)
                 try:
                     self.reScalePlot(wdg, profiles, profileName, library)
                     wdg.plotWdg.figure.get_axes()[0].set_xbound( 1, max(profiles[len(profiles) - 1]["l"]) )
                 except:
                     pass
-                    #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
             wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
             wdg.plotWdg.draw()
 

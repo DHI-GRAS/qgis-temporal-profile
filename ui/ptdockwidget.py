@@ -78,6 +78,8 @@ class PTDockWidget(QDockWidget, FormClass):
         #self.showed = False
         
         QObject.connect(self.mdl, SIGNAL("rowsInserted(QModelIndex, int, int)"), self.addPersistentEditorForRows)
+        QObject.connect(self.cboXAxis, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
+        QObject.connect(self.butLoadXAxisSteps, SIGNAL("clicked()"), self.loadXAxisStepsFromFile)
         QObject.connect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
 
     def showIt(self):
@@ -124,6 +126,37 @@ class PTDockWidget(QDockWidget, FormClass):
             self.cboLibrary.addItem("Qwt5")
         if matplotlib_loaded:
             self.cboLibrary.addItem("Matplotlib")
+            
+        self.cboXAxis.addItem("Band numbers")
+        self.cboXAxis.addItem("From string")
+        self.cboXAxis.addItem("Time")
+        
+    def changeXAxisLabeling(self):
+        if self.cboXAxis.currentIndex() == 0:
+            self.leXAxisSteps.setEnabled(False)
+            self.butLoadXAxisSteps.setEnabled(False)
+            self.dateTimeEditCurrentTime.setEnabled(False)
+            self.spinBoxTimeExtent.setEnabled(False)
+            self.cboTimeExtent.setEnabled(False)
+        elif self.cboXAxis.currentIndex() == 1:
+            self.leXAxisSteps.setEnabled(True)
+            self.butLoadXAxisSteps.setEnabled(True)
+            self.dateTimeEditCurrentTime.setEnabled(False)
+            self.spinBoxTimeExtent.setEnabled(False)
+            self.cboTimeExtent.setEnabled(False)
+        elif self.cboXAxis.currentIndex() == 2:
+            self.leXAxisSteps.setEnabled(False)
+            self.butLoadXAxisSteps.setEnabled(False)
+            self.dateTimeEditCurrentTime.setEnabled(True)
+            self.spinBoxTimeExtent.setEnabled(True)
+            self.cboTimeExtent.setEnabled(True)
+            
+    def loadXAxisStepsFromFile(self):
+        fileName = QFileDialog.getOpenFileName(self, "Load X axis steps","","Text file (*.txt)")
+        if fileName:
+            with open(fileName) as fp:
+                self.leXAxisSteps.setText(fp.readline())
+                self.leXAxisSteps.editingFinished.emit()
 
     def closeEvent(self, event):
         self.emit( SIGNAL( "closed(PyQt_PyObject)" ), self )
@@ -160,13 +193,16 @@ class PTDockWidget(QDockWidget, FormClass):
             #self.widget_save_buttons.setVisible( False )
             self.plotWdg = PlottingTool().changePlotWidget("Matplotlib", self.frame_for_plot)
             layout.addWidget(self.plotWdg)
-            mpltoolbar = matplotlib.backends.backend_qt4agg.NavigationToolbar2QTAgg(self.plotWdg, self.frame_for_plot)
+            try:
+                mpltoolbar = matplotlib.backends.backend_qt4agg.NavigationToolbar2QTAgg(self.plotWdg, self.frame_for_plot)
+            except AttributeError:
+                mpltoolbar = matplotlib.backends.backend_qt4agg.NavigationToolbar2QT(self.plotWdg, self.frame_for_plot)
             #layout.addWidget( mpltoolbar )
             self.stackedWidget.insertWidget(1, mpltoolbar)
             self.stackedWidget.setCurrentIndex(1)
             lstActions = mpltoolbar.actions()
-            mpltoolbar.removeAction( lstActions[ 7 ] )
-            mpltoolbar.removeAction( lstActions[ 8 ] )
+            #mpltoolbar.removeAction( lstActions[ 7 ] )
+            #mpltoolbar.removeAction( lstActions[ 8 ] )
 
     # generic save as button
     def saveAs(self):
