@@ -120,8 +120,9 @@ class PlottingTool:
                 xx = profiles[i]["l"]
                 yy = profiles[i][profileName]
                 for j in range(len(yy)):
-                    if yy[j] is None:
+                    if yy[j] is None or isnan(yy[j]):
                         xx[j] = None
+                        yy[j] = None
 
                 # Split xx and yy into single lines at None values
                 xx = [list(g) for k,g in itertools.groupby(xx, lambda x:x is None) if not k]
