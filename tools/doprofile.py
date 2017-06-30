@@ -216,11 +216,12 @@ class DoProfile(QWidget):
                     offset = 0.0
                 srcArray = rasterBand.ReadAsArray(*srcOffset)
                 srcArray = srcArray*scale+offset 
-                srcArray = np.nan_to_num(srcArray)
                 masked = np.ma.MaskedArray(srcArray,
-                         mask=np.logical_or(srcArray == noData,
-                         np.logical_not(rasterizedArray)))
-                
+                            mask=np.logical_or.reduce((
+                             srcArray == noData,
+                             np.logical_not(rasterizedArray),
+                             np.isnan(srcArray))))
+
                 self.profiles[i]["l"].append(bandNumber)
                 self.profiles[i]["count"].append(float(masked.count()))
                 self.profiles[i]["max"].append(float(masked.max()))
