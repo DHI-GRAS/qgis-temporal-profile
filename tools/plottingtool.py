@@ -159,7 +159,7 @@ class PlottingTool:
                 # Don't plot if there are no valid values
                 validValues = False
                 for j in range(len(yy)):
-                    if not isnan(yy[j]):
+                    if not (yy[j] is None or isnan(yy[j])):
                         validValues = True
                         break
                 if not validValues:
