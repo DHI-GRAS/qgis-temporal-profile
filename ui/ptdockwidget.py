@@ -138,18 +138,21 @@ class PTDockWidget(QDockWidget, FormClass):
             self.dateTimeEditCurrentTime.setEnabled(False)
             self.spinBoxTimeExtent.setEnabled(False)
             self.cboTimeExtent.setEnabled(False)
+            self.cbTimeDimension.setEnabled(False)
         elif self.cboXAxis.currentIndex() == 1:
             self.leXAxisSteps.setEnabled(True)
             self.butLoadXAxisSteps.setEnabled(True)
             self.dateTimeEditCurrentTime.setEnabled(False)
             self.spinBoxTimeExtent.setEnabled(False)
             self.cboTimeExtent.setEnabled(False)
+            self.cbTimeDimension.setEnabled(False)
         elif self.cboXAxis.currentIndex() == 2:
             self.leXAxisSteps.setEnabled(False)
             self.butLoadXAxisSteps.setEnabled(False)
             self.dateTimeEditCurrentTime.setEnabled(True)
             self.spinBoxTimeExtent.setEnabled(True)
             self.cboTimeExtent.setEnabled(True)
+            self.cbTimeDimension.setEnabled(True)
             
     def loadXAxisStepsFromFile(self):
         fileName = QFileDialog.getOpenFileName(self, "Load X axis steps","","Text file (*.txt)")

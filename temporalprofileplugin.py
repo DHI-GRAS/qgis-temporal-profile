@@ -119,7 +119,8 @@ class TemporalSpectralProfilePlugin:
             QObject.connect(self.wdg.leXAxisSteps, SIGNAL("editingFinished()"), self.changeXAxisLabeling)
             QObject.connect(self.wdg.dateTimeEditCurrentTime, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
             QObject.connect(self.wdg.spinBoxTimeExtent, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
-            QObject.connect(self.wdg.cboTimeExtent, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)            
+            QObject.connect(self.wdg.cboTimeExtent, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
+            QObject.connect(self.wdg.cbTimeDimension, SIGNAL("stateChanged(int)"), self.changeXAxisLabeling)            
             self.tableViewTool.layerAddedOrRemoved.connect(self.refreshPlot)
             self.wdg.addOptionComboboxItems()
             self.addLayer()    
@@ -346,7 +347,8 @@ class TemporalSpectralProfilePlugin:
             self.doprofile.xAxisSteps = ["Timesteps", 
                                          self.wdg.dateTimeEditCurrentTime.dateTime().toPyDateTime(), 
                                          int(self.wdg.spinBoxTimeExtent.cleanText()),
-                                         self.wdg.cboTimeExtent.currentText()]
+                                         self.wdg.cboTimeExtent.currentText(),
+                                         self.wdg.cbTimeDimension.isChecked()]
             if self.plotlibrary == "Qwt5":
                 text = "Temporal/Spectral Profile Tool: There is currently no support using " + \
                               "Time steps while using the Qwt plotlibrary"

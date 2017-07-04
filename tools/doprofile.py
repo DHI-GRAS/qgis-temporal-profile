@@ -32,6 +32,7 @@
 ***************************************************************************
 """
 import math
+import re
 from datetime import datetime, timedelta
 
 from PyQt4.QtCore import *
@@ -39,6 +40,7 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from PyQt4.QtSvg import * # required in some distros
 from qgis.core import *
+from qgis.gui import *
 from plottingtool import PlottingTool
 
 from osgeo import gdal, ogr
@@ -257,6 +259,7 @@ class DoProfile(QWidget):
                 startTime = self.xAxisSteps[1]
                 step = self.xAxisSteps[2]
                 stepType = self.xAxisSteps[3]
+                useNetcdfTime = self.xAxisSteps[4]
                 if stepType == "years":
                     stepType = "days"
                     step = step * 365
@@ -265,9 +268,32 @@ class DoProfile(QWidget):
                     step = step * 365/12
 
                 profile["l"] = []
-                for i in range(stepsNum):
-                    timedeltaParams = {stepType: step*i}
-                    profile["l"].append(startTime + timedelta(**timedeltaParams))
+                if useNetcdfTime and profile["layer"].source().startswith("NETCDF:"):
+                    try:
+                        import netCDF4
+                        filename = re.match('NETCDF:\"(.*)\":.*$', profile["layer"].source()).group(1)
+                        nc = netCDF4.Dataset(filename, mode='r')
+                        profile["l"] = netCDF4.num2date(nc.variables["time"][:],
+                                                        units = nc.variables["time"].units,
+                                                        calendar = nc.variables["time"].calendar)
+                        nc.close()
+                    except ImportError:
+                        text = "Temporal/Spectral Profile Tool: netCDF4 module is required to read NetCDF " + \
+                               "time dimension. Please use pip install netCDF4"
+                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                                                           QgsMessageBar.WARNING, 5)
+                        profile["l"] = []
+                    except KeyError:
+                        text = "Temporal/Spectral Profile Tool: NetCDF file does not have " + \
+                               "time dimension."
+                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                                                           QgsMessageBar.WARNING, 5)
+                        nc.close()
+                        profile["l"] = []
+                if profile["l"] == []:
+                    for i in range(stepsNum):
+                        timedeltaParams = {stepType: step*i}
+                        profile["l"].append(startTime + timedelta(**timedeltaParams))
         else:
             for profile in self.profiles:
                 # Truncate the profiles to the minimum of the length of each profile
