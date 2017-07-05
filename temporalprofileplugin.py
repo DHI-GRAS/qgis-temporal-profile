@@ -104,7 +104,7 @@ class TemporalSpectralProfilePlugin:
 
         #if dock not already opened, open the dock and all the necessary thing (model,doProfile...)
         if self.dockOpened == False:
-            self.mdl = QStandardItemModel(0, 5)
+            self.mdl = QStandardItemModel(0, 6)
             self.wdg = PTDockWidget(self.iface.mainWindow(), self.iface, self.mdl)
             self.wdg.showIt()
             self.doprofile = DoProfile(self.iface,self.wdg,self.pointTool, self)

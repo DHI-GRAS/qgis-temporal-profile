@@ -54,6 +54,7 @@ class DoProfile(QWidget):
         QWidget.__init__(self, parent)
         self.profiles = None        #dictionary where is saved the plotting data {"l":[l],"z":[z], "layer":layer1, "curve":curve1}
         self.xAxisSteps = None
+        self.xAxisStepType = "numeric"
         self.iface = iface
         self.tool = tool1
         self.dockwidget = dockwidget1
@@ -93,7 +94,7 @@ class DoProfile(QWidget):
         self.removeClosedLayers(model)
         if self.pointToProfile == None:
             return
-        PlottingTool().clearData(self.dockwidget, self.profiles, library)
+        PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
         
         #creating the plots of profiles
@@ -133,7 +134,7 @@ class DoProfile(QWidget):
         if geometry is None or geometry.isEmpty():
             return
         
-        PlottingTool().clearData(self.dockwidget, self.profiles, library)
+        PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
 
         #creating the plots of profiles
@@ -251,6 +252,7 @@ class DoProfile(QWidget):
 
     def setXAxisSteps(self):
         if self.xAxisSteps == None:
+            self.changeXAxisStepType("numeric")
             return
         
         elif self.xAxisSteps[0] == "Timesteps":
@@ -294,6 +296,8 @@ class DoProfile(QWidget):
                     for i in range(stepsNum):
                         timedeltaParams = {stepType: step*i}
                         profile["l"].append(startTime + timedelta(**timedeltaParams))
+                
+                self.changeXAxisStepType("timedate")        
         else:
             for profile in self.profiles:
                 # Truncate the profiles to the minimum of the length of each profile
@@ -312,6 +316,15 @@ class DoProfile(QWidget):
                     if stat == "layer":
                         continue
                     profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
+            
+            self.changeXAxisStepType("numeric")
+            
+    def changeXAxisStepType(self, newType):
+        if self.xAxisStepType == newType:
+            return
+        else:
+            self.xAxisStepType = newType
+            PlottingTool().resetAxis(self.dockwidget, self.library)
     
     def mapToPixel(self, mX, mY, geoTransform):
         # GDAL 1.x
