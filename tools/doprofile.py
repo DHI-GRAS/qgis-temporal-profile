@@ -381,10 +381,10 @@ class DoProfile(QWidget):
             self.mdl = QStandardItemModel(rows+1, columns)
             self.mdl.setVerticalHeaderLabels(["band"] + rowNames)
             for j in range(columns):
-                self.mdl.setData(self.mdl.index(0, j, QModelIndex()), self.profiles[i]["l"][j])
+                self.mdl.setData(self.mdl.index(0, j, QModelIndex()), str(self.profiles[i]["l"][j]))
                 self.mdl.setData(self.mdl.index(0, j, QModelIndex()), font ,Qt.FontRole)
                 for k in range(rows):
-                    self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), self.profiles[i][rowNames[k]][j])
+                    self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), str(self.profiles[i][rowNames[k]][j]))
                     self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), font ,Qt.FontRole)
             #self.tableView[i].setVerticalHeaderLabels(rowNames)
             self.tableView[i].verticalHeader().setDefaultSectionSize(18)
