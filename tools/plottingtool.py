@@ -58,7 +58,6 @@ except:
 
 class PlottingTool:
 
-
     def changePlotWidget(self, library, frame_for_plot):
         if library == "Qwt5" and has_qwt:
             plotWdg = QwtPlot(frame_for_plot)
@@ -106,19 +105,19 @@ class PlottingTool:
             canvas.setSizePolicy(sizePolicy)
             return canvas
 
-
-
     def attachCurves(self, wdg, profiles, model1, library):
-        if library == "Qwt5" and has_qwt:
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), i)
-                profileName = model1.item(i,4).data(Qt.EditRole)
-
+        for i in range(0 , model1.rowCount()):
+            profileName = model1.item(i,4).data(Qt.EditRole)
+            profileId = model1.item(i,5).data(Qt.EditRole)
+            isVisible = model1.item(i,0).data(Qt.CheckStateRole)
+            
+            xx = profiles[i]["l"]
+            yy = profiles[i][profileName]
+        
+            if library == "Qwt5" and has_qwt:
                 # As QwtPlotCurve doesn't support nodata, split the data into single lines
                 # with breaks wherever data is None.
                 # Prepare two lists of coordinates (xx and yy). Make x=None whenever y==None.
-                xx = profiles[i]["l"]
-                yy = profiles[i][profileName]
                 for j in range(len(yy)):
                     if yy[j] is None or isnan(yy[j]):
                         xx[j] = None
@@ -130,54 +129,34 @@ class PlottingTool:
 
                 # Create & attach one QwtPlotCurve per one single line
                 for j in range(len(xx)):
-                    curve = QwtPlotCurve(tmp_name)
+                    curve = QwtPlotCurve(profileId)
                     curve.setData(xx[j], yy[j])
 
                     curve.setPen(QPen(model1.item(i,1).data(Qt.BackgroundRole), 3))
                     curve.attach(wdg.plotWdg)
-                    if model1.item(i,0).data(Qt.CheckStateRole):
-                        curve.setVisible(True)
-                    else:
-                        curve.setVisible(False)
-
-                #scaling this
-                try:
-                    wdg.setAxisScale(2,0,max(profiles[len(profiles) - 1]["l"]),0)
-                    self.reScalePlot(wdg, profiles, profileName, library)
-                except:
-                    pass
-            wdg.plotWdg.replot()
+                    curve.setVisible(isVisible)
             
-        elif library == "Matplotlib" and has_mpl:
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), i)
-                profileName = model1.item(i,4).data(Qt.EditRole)
-                
-                xx = profiles[i]["l"]
-                yy = profiles[i][profileName]
-                
+            elif library == "Matplotlib" and has_mpl:
                 # Don't plot if there are no valid values
                 validValues = False
                 for j in range(len(yy)):
-                    if not isnan(yy[j]):
+                    if not (yy[j] is None or isnan(yy[j])):
                         validValues = True
                         break
                 if not validValues:
                     continue        
 
-                if model1.item(i,0).data(Qt.CheckStateRole):
-                    wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = tmp_name, linewidth = 3, visible = True)
+                lines = wdg.plotWdg.figure.get_axes()[0].get_lines()
+                lineIds = [line.get_gid() for line in lines]
+                if profileId in lineIds:
+                    # Update existing line
+                    line = lines[lineIds.index(profileId)]
+                    line.set_data([xx, yy])
                 else:
-                    wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = tmp_name, linewidth = 3, visible = False)
-                self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), tmp_name)
-                try:
-                    self.reScalePlot(wdg, profiles, profileName, library)
-                    wdg.plotWdg.figure.get_axes()[0].set_xbound( 1, max(profiles[len(profiles) - 1]["l"]) )
-                except:
-                    pass
-            wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
-            wdg.plotWdg.draw()
-
+                    # Create new line
+                    line = wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = profileId)[0]
+                line.set_visible(isVisible)
+                self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), profileId)
 
     def findMin(self,profiles, profileName, nr):
         minVal = min( z for z in profiles[nr][profileName] if z is not None )
@@ -196,6 +175,8 @@ class PlottingTool:
     def reScalePlot(self, wdg, profiles, model, library):                         # called when spinbox value changed
         if profiles == None:
             return
+        
+        # Rescale Y-axis
         minimumValue = wdg.sbMinVal.value()
         maximumValue = wdg.sbMaxVal.value()
         if minimumValue == maximumValue:
@@ -222,8 +203,15 @@ class PlottingTool:
                 wdg.plotWdg.replot()
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.get_axes()[0].set_ybound(minimumValue,maximumValue)
-                wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
                 wdg.plotWdg.draw()
+                
+        # Rescale X-axis
+        for i in range(0,len(profiles)):    
+            minimumValueX = min( z for z in profiles[i]["l"] if z is not None )
+            maximumValueX = max( z for z in profiles[i]["l"] if z is not None )
+        if library == "Matplotlib" and has_mpl:
+            margin = (maximumValueX - minimumValueX)/50
+            wdg.plotWdg.figure.get_axes()[0].set_xlim([minimumValueX-margin, maximumValueX+margin])
 
     def calculateSpinStep(self, minimum, maximum):
         valueRange = maximum - minimum
@@ -232,30 +220,30 @@ class PlottingTool:
         step = valueRange / 10.0
         return round(step, -int(floor(log10(step))))
 
-    def clearData(self, wdg, profiles, library):                             # erase one of profiles
-        if not profiles:
-            return
+    def clearData(self, wdg, models, library):                             # erase one of profiles
         if library == "Qwt5" and has_qwt:
+            # Remove all lines
             wdg.plotWdg.clear()
-            for i in range(0,len(profiles)):
-                profileNames = profiles[i].keys()
-                for name in profileNames:
-                    profiles[i][name] = []
-            temp1 = wdg.plotWdg.itemList()
-            for j in range(len(temp1)):
-                if temp1[j].rtti() == QwtPlotItem.Rtti_PlotCurve:
-                    temp1[j].detach()
-            #wdg.plotWdg.replot()
         elif library == "Matplotlib" and has_mpl:
-            wdg.plotWdg.figure.get_axes()[0].cla()
+            # Remove only profiles which were removed from the model. This way
+            # line styling of existing profiles does not change.
+            ids = [models.item(i,5).data(Qt.EditRole) for i in range(models.rowCount())]
+            lines = wdg.plotWdg.figure.get_axes()[0].get_lines()
+            for i, line in enumerate(lines):
+                if line.get_gid() not in ids:
+                    lines.pop(i).remove()
             self.manageMatplotlibAxe(wdg.plotWdg.figure.get_axes()[0])
-            #wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
-            #wdg.plotWdg.draw()
         wdg.sbMaxVal.setEnabled(False)
         wdg.sbMinVal.setEnabled(False)
         wdg.sbMaxVal.setValue(0)
         wdg.sbMinVal.setValue(0)
 
+    def resetAxis(self, wdg, library):
+        if library == "Qwt5" and has_qwt:
+            wdg.plotWdg.clear()
+        elif library == "Matplotlib" and has_mpl:
+            wdg.plotWdg.figure.get_axes()[0].cla()
+            self.manageMatplotlibAxe(wdg.plotWdg.figure.get_axes()[0])
 
     def changeColor(self,wdg, library, color1, name):                    #Action when clicking the tableview - color
         if library == "Qwt5":
@@ -293,7 +281,7 @@ class PlottingTool:
 
 
     def manageMatplotlibAxe(self, axe1):
-        axe1.grid()
+        axe1.grid(True)
         axe1.tick_params(axis = "both", which = "major", direction= "out", length=10, width=1, bottom = True, top = False, left = True, right = False)
         axe1.minorticks_on()
         axe1.tick_params(axis = "both", which = "minor", direction= "out", length=5, width=1, bottom = True, top = False, left = True, right = False)

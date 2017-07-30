@@ -27,7 +27,11 @@ New functionality in version 1.2 allows for changing the x-axis steps. They can 
 
 The string for setting the x-axis steps must contain only numbers (including "nan") delimited by ";". The number of steps will be truncated to the minimum of the number of steps in the string and the number of bands in the raster. It is possible to skip a raster band during plotting by setting the corresponding step to "nan".
 
-The time-step option only works if Matplotlib is chosen as the plotting library. A time step of "months" is approximated as 365/12 days and a time step of "years" is approximated as 365 days.
+The time-step option only works if Matplotlib is chosen as the plotting library. A time step of "months" is approximated as 365/12 days and a time step of "years" is approximated as 365 days. If NetCDF with time dimension is used as the raster data source then the plugin can also use this dimension's dates during plotting.
+
+In addition, when Matplotlib is used as the plotting library, the built-in "Figure options" can be used to customise the look of the axes and the curves.
+
+![](https://github.com/TIGER-NET/screenshots/blob/master/Temporal_profile_tool/temporal_profile_figure_options.png)
 
 This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa.
 

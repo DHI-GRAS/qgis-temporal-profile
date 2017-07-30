@@ -30,7 +30,7 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
-
+import uuid
 
 from qgis.core import *
 from qgis.gui import *
@@ -90,7 +90,8 @@ class TableViewTool(QObject):
         mdl.item(row,3).setFlags(Qt.NoItemFlags)
         mdl.setData(mdl.index(row, 4, QModelIndex()), "")
         mdl.item(row,4).setFlags(Qt.NoItemFlags)
-        
+        mdl.setData(mdl.index(row, 5, QModelIndex()), layer2.name()+str(uuid.uuid4()))
+        mdl.item(row,5).setFlags(Qt.NoItemFlags)
         self.layerAddedOrRemoved.emit()
         
         
@@ -122,7 +123,7 @@ class TableViewTool(QObject):
         
     def onClick(self, iface, wdg, mdl, plotlibrary, index):                    #action when clicking the tableview
         item = mdl.itemFromIndex(index)
-        name = ("%s#%d") % (mdl.item(index.row(),2).data(Qt.EditRole), index.row())
+        name = mdl.item(index.row(),5).data(Qt.EditRole)
         if index.column() == 1:                #modifying color
             color = QColorDialog().getColor(item.data(Qt.BackgroundRole))
             mdl.setData( mdl.index(item.row(), 1, QModelIndex())  ,color , Qt.BackgroundRole)

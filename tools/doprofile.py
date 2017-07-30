@@ -32,6 +32,7 @@
 ***************************************************************************
 """
 import math
+import re
 from datetime import datetime, timedelta
 
 from PyQt4.QtCore import *
@@ -39,6 +40,7 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from PyQt4.QtSvg import * # required in some distros
 from qgis.core import *
+from qgis.gui import *
 from plottingtool import PlottingTool
 
 from osgeo import gdal, ogr
@@ -52,6 +54,7 @@ class DoProfile(QWidget):
         QWidget.__init__(self, parent)
         self.profiles = None        #dictionary where is saved the plotting data {"l":[l],"z":[z], "layer":layer1, "curve":curve1}
         self.xAxisSteps = None
+        self.xAxisStepType = "numeric"
         self.iface = iface
         self.tool = tool1
         self.dockwidget = dockwidget1
@@ -91,7 +94,7 @@ class DoProfile(QWidget):
         self.removeClosedLayers(model)
         if self.pointToProfile == None:
             return
-        PlottingTool().clearData(self.dockwidget, self.profiles, library)
+        PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
         
         #creating the plots of profiles
@@ -131,7 +134,7 @@ class DoProfile(QWidget):
         if geometry is None or geometry.isEmpty():
             return
         
-        PlottingTool().clearData(self.dockwidget, self.profiles, library)
+        PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
 
         #creating the plots of profiles
@@ -249,6 +252,7 @@ class DoProfile(QWidget):
 
     def setXAxisSteps(self):
         if self.xAxisSteps == None:
+            self.changeXAxisStepType("numeric")
             return
         
         elif self.xAxisSteps[0] == "Timesteps":
@@ -257,6 +261,7 @@ class DoProfile(QWidget):
                 startTime = self.xAxisSteps[1]
                 step = self.xAxisSteps[2]
                 stepType = self.xAxisSteps[3]
+                useNetcdfTime = self.xAxisSteps[4]
                 if stepType == "years":
                     stepType = "days"
                     step = step * 365
@@ -265,9 +270,34 @@ class DoProfile(QWidget):
                     step = step * 365/12
 
                 profile["l"] = []
-                for i in range(stepsNum):
-                    timedeltaParams = {stepType: step*i}
-                    profile["l"].append(startTime + timedelta(**timedeltaParams))
+                if useNetcdfTime and profile["layer"].source().startswith("NETCDF:"):
+                    try:
+                        import netCDF4
+                        filename = re.match('NETCDF:\"(.*)\":.*$', profile["layer"].source()).group(1)
+                        nc = netCDF4.Dataset(filename, mode='r')
+                        profile["l"] = netCDF4.num2date(nc.variables["time"][:],
+                                                        units = nc.variables["time"].units,
+                                                        calendar = nc.variables["time"].calendar)
+                        nc.close()
+                    except ImportError:
+                        text = "Temporal/Spectral Profile Tool: netCDF4 module is required to read NetCDF " + \
+                               "time dimension. Please use pip install netCDF4"
+                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                                                           QgsMessageBar.WARNING, 5)
+                        profile["l"] = []
+                    except KeyError:
+                        text = "Temporal/Spectral Profile Tool: NetCDF file does not have " + \
+                               "time dimension."
+                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                                                           QgsMessageBar.WARNING, 5)
+                        nc.close()
+                        profile["l"] = []
+                if profile["l"] == []:
+                    for i in range(stepsNum):
+                        timedeltaParams = {stepType: step*i}
+                        profile["l"].append(startTime + timedelta(**timedeltaParams))
+                
+                self.changeXAxisStepType("timedate")        
         else:
             for profile in self.profiles:
                 # Truncate the profiles to the minimum of the length of each profile
@@ -286,6 +316,15 @@ class DoProfile(QWidget):
                     if stat == "layer":
                         continue
                     profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
+            
+            self.changeXAxisStepType("numeric")
+            
+    def changeXAxisStepType(self, newType):
+        if self.xAxisStepType == newType:
+            return
+        else:
+            self.xAxisStepType = newType
+            PlottingTool().resetAxis(self.dockwidget, self.library)
     
     def mapToPixel(self, mX, mY, geoTransform):
         # GDAL 1.x
@@ -342,10 +381,10 @@ class DoProfile(QWidget):
             self.mdl = QStandardItemModel(rows+1, columns)
             self.mdl.setVerticalHeaderLabels(["band"] + rowNames)
             for j in range(columns):
-                self.mdl.setData(self.mdl.index(0, j, QModelIndex()), self.profiles[i]["l"][j])
+                self.mdl.setData(self.mdl.index(0, j, QModelIndex()), str(self.profiles[i]["l"][j]))
                 self.mdl.setData(self.mdl.index(0, j, QModelIndex()), font ,Qt.FontRole)
                 for k in range(rows):
-                    self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), self.profiles[i][rowNames[k]][j])
+                    self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), str(self.profiles[i][rowNames[k]][j]))
                     self.mdl.setData(self.mdl.index(k+1, j, QModelIndex()), font ,Qt.FontRole)
             #self.tableView[i].setVerticalHeaderLabels(rowNames)
             self.tableView[i].verticalHeader().setDefaultSectionSize(18)

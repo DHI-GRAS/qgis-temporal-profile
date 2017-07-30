@@ -104,7 +104,7 @@ class TemporalSpectralProfilePlugin:
 
         #if dock not already opened, open the dock and all the necessary thing (model,doProfile...)
         if self.dockOpened == False:
-            self.mdl = QStandardItemModel(0, 5)
+            self.mdl = QStandardItemModel(0, 6)
             self.wdg = PTDockWidget(self.iface.mainWindow(), self.iface, self.mdl)
             self.wdg.showIt()
             self.doprofile = DoProfile(self.iface,self.wdg,self.pointTool, self)
@@ -119,7 +119,8 @@ class TemporalSpectralProfilePlugin:
             QObject.connect(self.wdg.leXAxisSteps, SIGNAL("editingFinished()"), self.changeXAxisLabeling)
             QObject.connect(self.wdg.dateTimeEditCurrentTime, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
             QObject.connect(self.wdg.spinBoxTimeExtent, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
-            QObject.connect(self.wdg.cboTimeExtent, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)            
+            QObject.connect(self.wdg.cboTimeExtent, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
+            QObject.connect(self.wdg.cbTimeDimension, SIGNAL("stateChanged(int)"), self.changeXAxisLabeling)            
             self.tableViewTool.layerAddedOrRemoved.connect(self.refreshPlot)
             self.wdg.addOptionComboboxItems()
             self.addLayer()    
@@ -346,7 +347,8 @@ class TemporalSpectralProfilePlugin:
             self.doprofile.xAxisSteps = ["Timesteps", 
                                          self.wdg.dateTimeEditCurrentTime.dateTime().toPyDateTime(), 
                                          int(self.wdg.spinBoxTimeExtent.cleanText()),
-                                         self.wdg.cboTimeExtent.currentText()]
+                                         self.wdg.cboTimeExtent.currentText(),
+                                         self.wdg.cbTimeDimension.isChecked()]
             if self.plotlibrary == "Qwt5":
                 text = "Temporal/Spectral Profile Tool: There is currently no support using " + \
                               "Time steps while using the Qwt plotlibrary"
