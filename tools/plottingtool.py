@@ -206,9 +206,15 @@ class PlottingTool:
                 wdg.plotWdg.draw()
                 
         # Rescale X-axis
+        minimumValueX = None
+        maximumValueX = None
         for i in range(0,len(profiles)):    
-            minimumValueX = min( z for z in profiles[i]["l"] if z is not None )
-            maximumValueX = max( z for z in profiles[i]["l"] if z is not None )
+            minimumValueX = min( z for z in profiles[i]["l"])
+            maximumValueX = max( z for z in profiles[i]["l"])
+        if minimumValueX is None:
+            minimumValueX = 0.0
+        if maximumValueX is None:
+            maximumValueX = 1.0
         if library == "Matplotlib" and has_mpl:
             margin = (maximumValueX - minimumValueX)/50
             wdg.plotWdg.figure.get_axes()[0].set_xlim([minimumValueX-margin, maximumValueX+margin])
