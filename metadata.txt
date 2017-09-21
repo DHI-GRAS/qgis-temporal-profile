@@ -8,13 +8,15 @@ about =
  
 	This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa. Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
 category=Raster
-version=1.2.1
+version=1.2.2
 qgisMinimumVersion=2.12
 
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=1.2.1
+changelog=1.2.2
+    - Bug fixes
+    1.2.1
     - Add option to set X-axis time steps from NetCDF time dimension.
     - Do not change matplotlib line styling unless axis also needs changing.
     - Bug fixes.
