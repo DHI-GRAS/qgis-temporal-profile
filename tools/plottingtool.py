@@ -106,6 +106,8 @@ class PlottingTool:
             return canvas
 
     def attachCurves(self, wdg, profiles, model1, library):
+        if library == "Qwt5" and has_qwt:
+                wdg.plotWdg.clear()
         for i in range(0 , model1.rowCount()):
             profileName = model1.item(i,4).data(Qt.EditRole)
             profileId = model1.item(i,5).data(Qt.EditRole)
@@ -137,15 +139,6 @@ class PlottingTool:
                     curve.setVisible(isVisible)
             
             elif library == "Matplotlib" and has_mpl:
-                # Don't plot if there are no valid values
-                validValues = False
-                for j in range(len(yy)):
-                    if not (yy[j] is None or isnan(yy[j])):
-                        validValues = True
-                        break
-                if not validValues:
-                    continue        
-
                 lines = wdg.plotWdg.figure.get_axes()[0].get_lines()
                 lineIds = [line.get_gid() for line in lines]
                 if profileId in lineIds:
@@ -172,15 +165,14 @@ class PlottingTool:
         maxVal =  maxVal + d*0.05
         return ceil(maxVal) if abs(maxVal) > 1 else maxVal
 
-    def reScalePlot(self, wdg, profiles, model, library):                         # called when spinbox value changed
+    def reScalePlot(self, wdg, profiles, model, library, autoMode = True):                         # called when spinbox value changed
         if profiles == None:
             return
         
         # Rescale Y-axis
         minimumValue = wdg.sbMinVal.value()
         maximumValue = wdg.sbMaxVal.value()
-        if minimumValue == maximumValue:
-            # Automatic mode
+        if autoMode:
             minimumValue = 1000000000
             maximumValue = -1000000000
             for i in range(0,len(profiles)):
@@ -226,23 +218,27 @@ class PlottingTool:
         step = valueRange / 10.0
         return round(step, -int(floor(log10(step))))
 
-    def clearData(self, wdg, models, library):                             # erase one of profiles
+    def clearData(self, wdg, model, library):
+        # Remove only profiles which were removed from the model. This way
+        # line styling of existing profiles does not change.
+        ids = [model.item(i,5).data(Qt.EditRole) for i in range(model.rowCount())]
         if library == "Qwt5" and has_qwt:
-            # Remove all lines
-            wdg.plotWdg.clear()
+            lines = wdg.plotWdg.itemList()
+            linesToRemove = []
+            for i, line in enumerate(lines):
+                if line.rtti() == QwtPlotItem.Rtti_PlotCurve and \
+                   str(line.title().text()) not in ids:
+                    linesToRemove.append(line)
+            for line in linesToRemove:
+                line.detach()
+            wdg.plotWdg.replot()
         elif library == "Matplotlib" and has_mpl:
-            # Remove only profiles which were removed from the model. This way
-            # line styling of existing profiles does not change.
-            ids = [models.item(i,5).data(Qt.EditRole) for i in range(models.rowCount())]
             lines = wdg.plotWdg.figure.get_axes()[0].get_lines()
             for i, line in enumerate(lines):
                 if line.get_gid() not in ids:
                     lines.pop(i).remove()
             self.manageMatplotlibAxe(wdg.plotWdg.figure.get_axes()[0])
-        wdg.sbMaxVal.setEnabled(False)
-        wdg.sbMinVal.setEnabled(False)
-        wdg.sbMaxVal.setValue(0)
-        wdg.sbMinVal.setValue(0)
+            wdg.plotWdg.draw()
 
     def resetAxis(self, wdg, library):
         if library == "Qwt5" and has_qwt:

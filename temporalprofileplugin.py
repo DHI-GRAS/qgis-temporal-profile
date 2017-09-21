@@ -381,6 +381,7 @@ class TemporalSpectralProfilePlugin:
             except TypeError:
                 pass
             self.tableViewTool.removeLayer(self.mdl, index)
+            PlottingTool().clearData(self.wdg, self.mdl, self.plotlibrary)
 
     def about(self):
         from ui.dlgabout import DlgAbout

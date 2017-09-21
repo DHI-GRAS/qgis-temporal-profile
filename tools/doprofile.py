@@ -440,7 +440,7 @@ class DoProfile(QWidget):
         if self.dockwidget.sbMinVal.value() == self.dockwidget.sbMaxVal.value() == 0:
             # don't execute it on init
             return
-        PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library)
+        PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library, autoMode = False)
 
 
     def getProfileCurve(self,nr):
