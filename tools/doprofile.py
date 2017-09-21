@@ -270,10 +270,14 @@ class DoProfile(QWidget):
                     step = step * 365/12
 
                 profile["l"] = []
-                if useNetcdfTime and profile["layer"].source().startswith("NETCDF:"):
+                if useNetcdfTime and (profile["layer"].source().startswith("NETCDF:") or
+                                      profile["layer"].source().endswith(".nc")):
                     try:
                         import netCDF4
-                        filename = re.match('NETCDF:\"(.*)\":.*$', profile["layer"].source()).group(1)
+                        if profile["layer"].source().startswith("NETCDF:"):
+                            filename = re.match('NETCDF:\"(.*)\":.*$', profile["layer"].source()).group(1)
+                        else:
+                            filename = profile["layer"].source()
                         nc = netCDF4.Dataset(filename, mode='r')
                         profile["l"] = netCDF4.num2date(nc.variables["time"][:],
                                                         units = nc.variables["time"].units,
@@ -436,7 +440,7 @@ class DoProfile(QWidget):
         if self.dockwidget.sbMinVal.value() == self.dockwidget.sbMaxVal.value() == 0:
             # don't execute it on init
             return
-        PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library)
+        PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library, autoMode = False)
 
 
     def getProfileCurve(self,nr):

@@ -58,7 +58,7 @@ class TemporalSpectralProfilePlugin:
         self.canvas = iface.mapCanvas()
         self.wdg = None
         self.pointTool = None
-        self.lastFreeHandPoints = []
+
 
 
     def initGui(self):
@@ -121,7 +121,6 @@ class TemporalSpectralProfilePlugin:
             QObject.connect(self.wdg.spinBoxTimeExtent, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
             QObject.connect(self.wdg.cboTimeExtent, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
             QObject.connect(self.wdg.cbTimeDimension, SIGNAL("stateChanged(int)"), self.changeXAxisLabeling)            
-            self.tableViewTool.layerAddedOrRemoved.connect(self.refreshPlot)
             self.wdg.addOptionComboboxItems()
             self.addLayer()    
             self.dockOpened = True
@@ -138,8 +137,6 @@ class TemporalSpectralProfilePlugin:
         self.pointstoDraw = []
         self.pointstoCal = []
         self.lastClicked = [[-9999999999.9,9999999999.9]]
-        # The last valid line we drew to create a free-hand profile
-        self.lastFreeHandPoints = []
         
         #Help about what doing
         if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
@@ -232,7 +229,6 @@ class TemporalSpectralProfilePlugin:
             self.iface.mainWindow().statusBar().showMessage(str(self.pointstoDraw))
             self.doprofile.calculatePointProfile(self.pointstoDraw,self.mdl, self.plotlibrary)
             #Reset
-            self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
             #temp point to distinct leftclick and dbleclick
             self.dblclktemp = newPoints
@@ -294,7 +290,6 @@ class TemporalSpectralProfilePlugin:
         self.deactivatePointMapTool()
         QObject.disconnect(self.wdg.comboBox, SIGNAL("currentIndexChanged(int)"), self.selectionMethod)
         QObject.disconnect(QgsMapLayerRegistry.instance(), SIGNAL("layersWillBeRemoved (QStringList)"), self.onLayersWillBeRemoved)
-        self.tableViewTool.layerAddedOrRemoved.disconnect(self.refreshPlot)
         self.mdl = None
         self.dockOpened = False
         self.cleaning()
@@ -364,7 +359,6 @@ class TemporalSpectralProfilePlugin:
             layer = self.iface.activeLayer()
         if isProfilable(layer):
             self.tableViewTool.addLayer(self.iface, self.mdl, layer)
-            layer.dataChanged.connect(self.refreshPlot)
 
     def _onClick(self,index1):                    #action when clicking the tableview
         self.tableViewTool.onClick(self.iface, self.wdg, self.mdl, self.plotlibrary, index1)
@@ -374,23 +368,9 @@ class TemporalSpectralProfilePlugin:
             index = self.tableViewTool.chooseLayerForRemoval(self.iface, self.mdl)
         
         if index is not None:
-            layer = self.mdl.index(index, 3).data()
-            try:
-                layer.dataChanged.disconnect(self.refreshPlot)
-            # In case the same layer is added multiple times to the tool 
-            except TypeError:
-                pass
             self.tableViewTool.removeLayer(self.mdl, index)
+            PlottingTool().clearData(self.wdg, self.mdl, self.plotlibrary)
 
     def about(self):
         from ui.dlgabout import DlgAbout
         DlgAbout(self.iface.mainWindow()).exec_()
-
-    def refreshPlot(self):
-        """
-            Refreshes/updates the plot without requiring the user to 
-            redraw the plot line (rubberband)
-        """
-        if self.selectionmethod == 0:
-            if len(self.lastFreeHandPoints) > 1:
-                self.doprofile.calculateProfil(self.lastFreeHandPoints, self.mdl, self.plotlibrary)
