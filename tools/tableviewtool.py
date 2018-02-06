@@ -30,13 +30,16 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
 import uuid
 
-from PyQt4.QtCore import Qt, QObject, QModelIndex, pyqtSignal
-from PyQt4.QtGui import QMessageBox, QInputDialog, QColor, QColorDialog, \
-                        QInputDialog
-from plottingtool import PlottingTool
-from utils import isProfilable
+from qgis.PyQt.QtCore import Qt, QObject, QModelIndex, pyqtSignal
+from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog, QColorDialog, QInputDialog
+from qgis.PyQt.QtGui import QColor
+from .plottingtool import PlottingTool
+from .utils import isProfilable
 
 
 class TableViewTool(QObject):

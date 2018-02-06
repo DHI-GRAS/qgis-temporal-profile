@@ -30,10 +30,14 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
 
-from PyQt4 import uic
-from PyQt4.QtCore import Qt, QObject, SIGNAL, QModelIndex, QT_VERSION
-from PyQt4.QtGui import QDockWidget
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import Qt, QObject, QModelIndex
+from qgis.PyQt.QtWidgets import QDockWidget
 
 from ..tools.plottingtool import PlottingTool
 
@@ -52,7 +56,7 @@ import platform
 import os
 
 
-from ComboBoxDelegate import ComboBoxDelegate
+from .ComboBoxDelegate import ComboBoxDelegate
 uiFilePath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'profiletool.ui'))
 FormClass = uic.loadUiType(uiFilePath)[0]
 
@@ -72,10 +76,10 @@ class PTDockWidget(QDockWidget, FormClass):
         self.mdl = mdl1
         #self.showed = False
         
-        QObject.connect(self.mdl, SIGNAL("rowsInserted(QModelIndex, int, int)"), self.addPersistentEditorForRows)
-        QObject.connect(self.cboXAxis, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
-        QObject.connect(self.butLoadXAxisSteps, SIGNAL("clicked()"), self.loadXAxisStepsFromFile)
-        QObject.connect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
+        self.mdl.rowsInserted.connect(self.addPersistentEditorForRows)
+        self.cboXAxis.currentIndexChanged.connect(self.changeXAxisLabeling)
+        self.butLoadXAxisSteps.clicked.connect(self.loadXAxisStepsFromFile)
+        self.butSaveAs.clicked.connect(self.saveAs)
 
     def showIt(self):
         self.location = Qt.BottomDockWidgetArea
@@ -150,15 +154,15 @@ class PTDockWidget(QDockWidget, FormClass):
             self.cbTimeDimension.setEnabled(True)
             
     def loadXAxisStepsFromFile(self):
-        fileName = QFileDialog.getOpenFileName(self, "Load X axis steps","","Text file (*.txt)")
+        fileName, __ = QFileDialog.getOpenFileName(self, "Load X axis steps","","Text file (*.txt)")
         if fileName:
             with open(fileName) as fp:
                 self.leXAxisSteps.setText(fp.readline())
                 self.leXAxisSteps.editingFinished.emit()
 
     def closeEvent(self, event):
-        self.emit( SIGNAL( "closed(PyQt_PyObject)" ), self )
-        QObject.disconnect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
+        self.closed.emit(self)
+        self.butSaveAs.clicked.disconnect(self.saveAs)
         return QDockWidget.closeEvent(self, event)
 
     def addPlotWidget(self, library):

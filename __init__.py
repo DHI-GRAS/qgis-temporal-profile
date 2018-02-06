@@ -29,7 +29,8 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from __future__ import absolute_import
 
 def classFactory(iface):
-    from temporalprofileplugin import TemporalSpectralProfilePlugin
+    from .temporalprofileplugin import TemporalSpectralProfilePlugin
     return TemporalSpectralProfilePlugin(iface)

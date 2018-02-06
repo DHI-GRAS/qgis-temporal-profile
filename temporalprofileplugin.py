@@ -31,23 +31,28 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
+from builtins import object
 
 from osgeo import osr
-from PyQt4.QtCore import Qt, QObject, SIGNAL
-from PyQt4.QtGui import QAction, QIcon, QStandardItemModel, QMessageBox, QColor
+from qgis.PyQt.QtCore import Qt, QObject
+from qgis.PyQt.QtWidgets import QAction, QMessageBox
+from qgis.PyQt.QtGui import QIcon, QStandardItemModel, QColor
 from qgis.core import QgsMapLayerRegistry, QgsPoint, QgsGeometry, QGis
 from qgis.gui import QgsRubberBand
 
 
-import resources
-from ui.ptdockwidget import PTDockWidget
-from tools.doprofile import DoProfile
-from tools.ptmaptool import ProfiletoolMapTool
-from tools.tableviewtool import TableViewTool
-from tools.plottingtool import PlottingTool
-from tools.utils import isProfilable
+from . import resources
+from .ui.ptdockwidget import PTDockWidget
+from .tools.doprofile import DoProfile
+from .tools.ptmaptool import ProfiletoolMapTool
+from .tools.tableviewtool import TableViewTool
+from .tools.plottingtool import PlottingTool
+from .tools.utils import isProfilable
 
-class TemporalSpectralProfilePlugin:
+class TemporalSpectralProfilePlugin(object):
 
     POINT_SELECTION = 0
     SELECTED_POLYGON = 1
@@ -65,9 +70,9 @@ class TemporalSpectralProfilePlugin:
         # create action 
         self.action = QAction(QIcon(":/plugins/temporalprofiletool/icons/temporalProfileIcon.png"), "Temporal/Spectral Profile", self.iface.mainWindow())
         self.action.setWhatsThis("Plots temporal/spectral profiles")
-        QObject.connect(self.action, SIGNAL("triggered()"), self.run)
+        self.action.triggered.connect(self.run)
         self.aboutAction = QAction("About", self.iface.mainWindow())
-        QObject.connect(self.aboutAction, SIGNAL("triggered()"), self.about)
+        self.aboutAction.triggered.connect(self.about)
 
         # add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
@@ -109,18 +114,18 @@ class TemporalSpectralProfilePlugin:
             self.wdg.showIt()
             self.doprofile = DoProfile(self.iface,self.wdg,self.pointTool, self)
             self.tableViewTool = TableViewTool()
-            QObject.connect(self.wdg, SIGNAL( "closed(PyQt_PyObject)" ), self.cleaning2)
-            QObject.connect(self.wdg.tableView,SIGNAL("clicked(QModelIndex)"), self._onClick) 
-            QObject.connect(self.wdg.pushButton_2, SIGNAL("clicked()"), self.addLayer)
-            QObject.connect(self.wdg.pushButton, SIGNAL("clicked()"), self.removeLayer)
-            QObject.connect(self.wdg.comboBox, SIGNAL("currentIndexChanged(int)"), self.selectionMethod)
-            QObject.connect(self.wdg.cboLibrary, SIGNAL("currentIndexChanged(int)"), self.changePlotLibrary)
-            QObject.connect(self.wdg.cboXAxis, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
-            QObject.connect(self.wdg.leXAxisSteps, SIGNAL("editingFinished()"), self.changeXAxisLabeling)
-            QObject.connect(self.wdg.dateTimeEditCurrentTime, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
-            QObject.connect(self.wdg.spinBoxTimeExtent, SIGNAL("editingFinished()"), self.changeXAxisLabeling) 
-            QObject.connect(self.wdg.cboTimeExtent, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
-            QObject.connect(self.wdg.cbTimeDimension, SIGNAL("stateChanged(int)"), self.changeXAxisLabeling)            
+            self.wdg.closed.connect(self.cleaning2)
+            self.wdg.tableView.clicked.connect(self._onClick) 
+            self.wdg.pushButton_2.clicked.connect(self.addLayer)
+            self.wdg.pushButton.clicked.connect(self.removeLayer)
+            self.wdg.comboBox.currentIndexChanged.connect(self.selectionMethod)
+            self.wdg.cboLibrary.currentIndexChanged.connect(self.changePlotLibrary)
+            self.wdg.cboXAxis.currentIndexChanged.connect(self.changeXAxisLabeling)
+            self.wdg.leXAxisSteps.editingFinished.connect(self.changeXAxisLabeling)
+            self.wdg.dateTimeEditCurrentTime.editingFinished.connect(self.changeXAxisLabeling) 
+            self.wdg.spinBoxTimeExtent.editingFinished.connect(self.changeXAxisLabeling) 
+            self.wdg.cboTimeExtent.currentIndexChanged.connect(self.changeXAxisLabeling)
+            self.wdg.cbTimeDimension.stateChanged.connect(self.changeXAxisLabeling)            
             self.wdg.addOptionComboboxItems()
             self.addLayer()    
             self.dockOpened = True
@@ -144,7 +149,7 @@ class TemporalSpectralProfilePlugin:
         elif self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
             self.iface.mainWindow().statusBar().showMessage(self.selectedPolygonInstructions)
             
-        QObject.connect(QgsMapLayerRegistry.instance(), SIGNAL("layersWillBeRemoved (QStringList)"), self.onLayersWillBeRemoved)
+        QgsMapLayerRegistry.instance().layersWillBeRemoved .connect(self.onLayersWillBeRemoved)
 
 #************************************* Canvas listener actions **********************************************
     
@@ -253,27 +258,27 @@ class TemporalSpectralProfilePlugin:
         return True
     
     def connectPointMapTool(self):
-        QObject.connect(self.pointTool, SIGNAL("moved"), self.moved)
-        QObject.connect(self.pointTool, SIGNAL("rightClicked"), self.rightClicked)
-        QObject.connect(self.pointTool, SIGNAL("leftClicked"), self.leftClicked)
-        QObject.connect(self.pointTool, SIGNAL("doubleClicked"), self.doubleClicked)
-        QObject.connect(self.pointTool, SIGNAL("deactivate"), self.deactivatePointMapTool)
+        self.pointTool.moved.connect(self.moved)
+        self.pointTool.rightClicked.connect(self.rightClicked)
+        self.pointTool.leftClicked.connect(self.leftClicked)
+        self.pointTool.doubleClicked.connect(self.doubleClicked)
+        self.pointTool.deactivate.connect(self.deactivatePointMapTool)
         
 
     def deactivatePointMapTool(self):        #enable clean exit of the plugin
-        QObject.disconnect(self.pointTool, SIGNAL("moved"), self.moved)
-        QObject.disconnect(self.pointTool, SIGNAL("leftClicked"), self.leftClicked)
-        QObject.disconnect(self.pointTool, SIGNAL("rightClicked"), self.rightClicked)
-        QObject.disconnect(self.pointTool, SIGNAL("doubleClicked"), self.doubleClicked)
+        self.pointTool.moved.disconnect(self.moved)
+        self.pointTool.leftClicked.disconnect(self.leftClicked)
+        self.pointTool.rightClicked.disconnect(self.rightClicked)
+        self.pointTool.doubleClicked.disconnect(self.doubleClicked)
         #QObject.disconnect(self.iface.mapCanvas(), SIGNAL("selectionChanged(QgsMapLayer *)"), self.selectionChanged)
         self.rubberband.reset(self.polygon)
         self.iface.mainWindow().statusBar().showMessage("")
 
     def connectSelectedPolygonsTool(self):
-        QObject.connect(self.iface.mapCanvas(), SIGNAL("selectionChanged(QgsMapLayer *)"), self.selectionChanged)
+        self.iface.mapCanvas().selectionChanged.connect(self.selectionChanged)
         
     def deactivagteSelectedPolygonsTools(self):
-        QObject.disconnect(self.iface.mapCanvas(), SIGNAL("selectionChanged(QgsMapLayer *)"), self.selectionChanged)
+        self.iface.mapCanvas().selectionChanged.disconnect(self.selectionChanged)
 
     def cleaning(self):            #used on right click
         try:
@@ -285,11 +290,11 @@ class TemporalSpectralProfilePlugin:
         self.iface.mainWindow().statusBar().showMessage( "" )
 
     def cleaning2(self):        #used when Dock dialog is closed
-        QObject.disconnect(self.wdg.tableView,SIGNAL("clicked(QModelIndex)"), self._onClick)
+        self.wdg.tableView.clicked.disconnect(self._onClick)
         self.deactivagteSelectedPolygonsTools() 
         self.deactivatePointMapTool()
-        QObject.disconnect(self.wdg.comboBox, SIGNAL("currentIndexChanged(int)"), self.selectionMethod)
-        QObject.disconnect(QgsMapLayerRegistry.instance(), SIGNAL("layersWillBeRemoved (QStringList)"), self.onLayersWillBeRemoved)
+        self.wdg.comboBox.currentIndexChanged.disconnect(self.selectionMethod)
+        QgsMapLayerRegistry.instance().layersWillBeRemoved .disconnect(self.onLayersWillBeRemoved)
         self.mdl = None
         self.dockOpened = False
         self.cleaning()
@@ -372,5 +377,5 @@ class TemporalSpectralProfilePlugin:
             PlottingTool().clearData(self.wdg, self.mdl, self.plotlibrary)
 
     def about(self):
-        from ui.dlgabout import DlgAbout
+        from .ui.dlgabout import DlgAbout
         DlgAbout(self.iface.mainWindow()).exec_()

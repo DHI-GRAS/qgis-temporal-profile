@@ -31,17 +31,19 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
 import math
 import re
 from datetime import datetime, timedelta
 
-from PyQt4.QtCore import Qt, QModelIndex, QSize, QObject, SIGNAL
-from PyQt4.QtGui import QWidget, QGroupBox, QFont, QApplication, QSizePolicy, \
-                        QTableView, QVBoxLayout, QStandardItemModel, QPushButton, \
-                        QApplication, QHBoxLayout
+from qgis.PyQt.QtCore import Qt, QModelIndex, QSize, QObject
+from qgis.PyQt.QtWidgets import QWidget, QGroupBox, QApplication, QSizePolicy, QTableView, QVBoxLayout, QPushButton, QApplication, QHBoxLayout
+from qgis.PyQt.QtGui import QFont, QStandardItemModel
 from qgis.core import QgsPoint, QgsRectangle, QgsGeometry, QgsRaster
 from qgis.gui import QgsMessageBar
-from plottingtool import PlottingTool
+from .plottingtool import PlottingTool
 
 from osgeo import gdal, ogr
 import numpy as np
@@ -112,8 +114,8 @@ class DoProfile(QWidget):
                 ident = None
             #if ident is not None and ident.has_key(choosenBand+1):
             if ident is not None:
-                self.profiles[i][statName] = ident.results().values()
-                self.profiles[i]["l"] = ident.results().keys()
+                self.profiles[i][statName] = list(ident.results().values())
+                self.profiles[i]["l"] = list(ident.results().keys())
         
         self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
@@ -306,7 +308,7 @@ class DoProfile(QWidget):
                 # or length of provided x-axis steps
                 stepsNum = min(len(self.xAxisSteps), len(profile["l"]))
                 profile["l"] = self.xAxisSteps[:stepsNum]
-                for stat in profile.keys():
+                for stat in list(profile.keys()):
                     if stat == "l" or stat == "layer":
                         continue
                     profile[stat] = profile[stat][:stepsNum]
@@ -314,7 +316,7 @@ class DoProfile(QWidget):
                 # If any x-axis step is a NaN then remove the corresponding
                 # value from profile
                 nans = [i for i, x in enumerate(profile["l"]) if math.isnan(x)]
-                for stat in profile.keys():
+                for stat in list(profile.keys()):
                     if stat == "layer":
                         continue
                     profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
@@ -376,7 +378,7 @@ class DoProfile(QWidget):
             self.tableView[i].setObjectName("tableView" + str(i))
             font = QFont("Arial", 8)
             columns = len(self.profiles[i]["l"])
-            rowNames = self.profiles[i].keys()
+            rowNames = list(self.profiles[i].keys())
             rowNames.remove("layer") # holds the QgsMapLayer instance
             rowNames.remove("l") # holds the band number
             rows = len(rowNames)
@@ -411,13 +413,13 @@ class DoProfile(QWidget):
             self.verticalLayout[i].addLayout(self.horizontalLayout)
 
             self.VLayout.addWidget(self.groupBox[i])
-            QObject.connect(self.profilePushButton[i], SIGNAL("clicked()"), self.copyTable)
+            self.profilePushButton[i].clicked.connect(self.copyTable)
 
     def copyTable(self):                            #Writing the table to clipboard in excel form
         nr = int( self.sender().objectName() )
         self.clipboard = QApplication.clipboard()
         text = "band"
-        rowNames = self.profiles[nr].keys()
+        rowNames = list(self.profiles[nr].keys())
         rowNames.remove("layer")
         rowNames.remove("l")
         for name in rowNames:

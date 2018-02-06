@@ -30,13 +30,17 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from builtins import str
+from builtins import range
+from builtins import object
 
 from math import log10, floor, ceil, sqrt, isnan
 
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QSizePolicy, QPen, QFileDialog, QPrintDialog, QPrinter, \
-                        QPixmap, QColor
-from PyQt4.QtSvg import QSvgGenerator
+from qgis.PyQt.QtCore import Qt, QSize
+from qgis.PyQt.QtWidgets import QSizePolicy, QFileDialog
+from qgis.PyQt.QtGui import QPen, QPixmap, QColor
+from qgis.PyQt.QtPrintSupport import QPrintDialog, QPrinter
+from qgis.PyQt.QtSvg import QSvgGenerator
 import platform
 
 has_qwt = False
@@ -56,7 +60,7 @@ except:
 
 
 
-class PlottingTool:
+class PlottingTool(object):
 
     def changePlotWidget(self, library, frame_for_plot):
         if library == "Qwt5" and has_qwt:
@@ -294,7 +298,7 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".ps","PostScript Format (*.ps)")
+        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".ps","PostScript Format (*.ps)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QPrinter()
@@ -315,7 +319,7 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 break
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".pdf","Portable Document Format (*.pdf)")
+        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".pdf","Portable Document Format (*.pdf)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QPrinter()
@@ -334,7 +338,7 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
+        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QSvgGenerator()
@@ -349,7 +353,7 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".png","Portable Network Graphics (*.png)")
+        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".png","Portable Network Graphics (*.png)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 QPixmap.grabWidget(wdg.plotWdg).save(fileName, "PNG")

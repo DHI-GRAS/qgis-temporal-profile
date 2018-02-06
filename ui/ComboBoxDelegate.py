@@ -30,8 +30,8 @@
 ***************************************************************************
 """
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QItemDelegate, QComboBox
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QItemDelegate, QComboBox
 
 class ComboBoxDelegate(QItemDelegate):
 
