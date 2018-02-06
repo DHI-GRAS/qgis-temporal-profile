@@ -32,22 +32,17 @@
 """
 
 from PyQt4 import uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtCore import Qt, QObject, SIGNAL, QModelIndex, QT_VERSION
+from PyQt4.QtGui import QDockWidget
 
-from qgis.core import *
-from qgis.gui import *
-
-from ..tools.plottingtool import *
-#from ..profileplugin import ProfilePlugin
+from ..tools.plottingtool import PlottingTool
 
 try:
-    from PyQt4.Qwt5 import *
+    from PyQt4 import Qwt5
     Qwt5_loaded = True
 except ImportError:
     Qwt5_loaded = False
 try:
-    #from matplotlib import *
     import matplotlib
     matplotlib_loaded = True
 except ImportError:
