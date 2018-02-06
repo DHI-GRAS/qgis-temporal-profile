@@ -33,17 +33,17 @@
 
 from math import log10, floor, ceil, sqrt, isnan
 
-from qgis.core import *
-from qgis.gui import *
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.QtSvg import *
+from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtGui import QSizePolicy, QPen, QFileDialog, QPrintDialog, QPrinter, \
+                        QPixmap, QColor
+from PyQt4.QtSvg import QSvgGenerator
 import platform
 
 has_qwt = False
 has_mpl = False
 try:
-    from PyQt4.Qwt5 import *
+    from PyQt4.Qwt5 import QwtPlot, QwtPlotZoomer, QwtPicker, QwtPlotPicker, \
+                           QwtPlotGrid, QwtPlotCurve, QwtPlotItem, Qwt
     has_qwt = True
     import itertools # only needed for Qwt plot
 except:

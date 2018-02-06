@@ -33,10 +33,10 @@
 """
 
 from osgeo import osr
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
-from qgis.gui import *
+from PyQt4.QtCore import Qt, QObject, SIGNAL
+from PyQt4.QtGui import QAction, QIcon, QStandardItemModel, QMessageBox, QColor
+from qgis.core import QgsMapLayerRegistry, QgsPoint, QgsGeometry, QGis
+from qgis.gui import QgsRubberBand
 
 
 import resources

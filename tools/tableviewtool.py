@@ -32,11 +32,10 @@
 """
 import uuid
 
-from qgis.core import *
-from qgis.gui import *
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from plottingtool import *
+from PyQt4.QtCore import Qt, QObject, QModelIndex, pyqtSignal
+from PyQt4.QtGui import QMessageBox, QInputDialog, QColor, QColorDialog, \
+                        QInputDialog
+from plottingtool import PlottingTool
 from utils import isProfilable
 
 

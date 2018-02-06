@@ -35,18 +35,16 @@ import math
 import re
 from datetime import datetime, timedelta
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
-from PyQt4.QtSvg import * # required in some distros
-from qgis.core import *
-from qgis.gui import *
+from PyQt4.QtCore import Qt, QModelIndex, QSize, QObject, SIGNAL
+from PyQt4.QtGui import QWidget, QGroupBox, QFont, QApplication, QSizePolicy, \
+                        QTableView, QVBoxLayout, QStandardItemModel, QPushButton, \
+                        QApplication, QHBoxLayout
+from qgis.core import QgsPoint, QgsRectangle, QgsGeometry, QgsRaster
+from qgis.gui import QgsMessageBar
 from plottingtool import PlottingTool
 
 from osgeo import gdal, ogr
 import numpy as np
-from PyQt4.QtCore import SIGNAL,SLOT,pyqtSignature
-
 
 class DoProfile(QWidget):
 

@@ -29,10 +29,9 @@
 ***************************************************************************
 """
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
-from qgis.gui import *
+from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtGui import QCursor
+from qgis.gui import QgsMapTool
 
 class ProfiletoolMapTool(QgsMapTool):
 
