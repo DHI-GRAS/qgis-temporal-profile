@@ -92,6 +92,7 @@ class PTDockWidget(QDockWidget, FormClass):
         self.tableView.setColumnWidth(2, 150)
         self.tableView.setColumnHidden(3 , True)
         self.tableView.setColumnWidth(4, 30)
+        self.tableView.setColumnHidden(5 , True)
         self.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self.tableView, ["value"]))
         hh = self.tableView.horizontalHeader()
         hh.setStretchLastSection(True)
