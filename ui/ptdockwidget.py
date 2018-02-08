@@ -36,7 +36,7 @@ from builtins import str
 from builtins import range
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QObject, QModelIndex
+from qgis.PyQt.QtCore import Qt, QObject, QModelIndex, pyqtSignal
 from qgis.PyQt.QtWidgets import QDockWidget
 
 from ..tools.plottingtool import PlottingTool
@@ -63,6 +63,8 @@ FormClass = uic.loadUiType(uiFilePath)[0]
 class PTDockWidget(QDockWidget, FormClass):
 
     TITLE = "ProfileTool"
+
+    closed = pyqtSignal()
 
     def __init__(self, parent, iface1, mdl1):
         QDockWidget.__init__(self, parent)
@@ -161,7 +163,7 @@ class PTDockWidget(QDockWidget, FormClass):
                 self.leXAxisSteps.editingFinished.emit()
 
     def closeEvent(self, event):
-        self.closed.emit(self)
+        self.closed.emit()
         self.butSaveAs.clicked.disconnect(self.saveAs)
         return QDockWidget.closeEvent(self, event)
 
@@ -196,9 +198,9 @@ class PTDockWidget(QDockWidget, FormClass):
             self.plotWdg = PlottingTool().changePlotWidget("Matplotlib", self.frame_for_plot)
             layout.addWidget(self.plotWdg)
             try:
-                mpltoolbar = matplotlib.backends.backend_qt4agg.NavigationToolbar2QTAgg(self.plotWdg, self.frame_for_plot)
+                mpltoolbar = matplotlib.backends.backend_qt5agg.NavigationToolbar2QTAgg(self.plotWdg, self.frame_for_plot)
             except AttributeError:
-                mpltoolbar = matplotlib.backends.backend_qt4agg.NavigationToolbar2QT(self.plotWdg, self.frame_for_plot)
+                mpltoolbar = matplotlib.backends.backend_qt5agg.NavigationToolbar2QT(self.plotWdg, self.frame_for_plot)
             #layout.addWidget( mpltoolbar )
             self.stackedWidget.insertWidget(1, mpltoolbar)
             self.stackedWidget.setCurrentIndex(1)

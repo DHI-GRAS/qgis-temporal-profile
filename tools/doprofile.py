@@ -84,35 +84,30 @@ class DoProfile(QWidget):
                 self.removeClosedLayers(model1)
                 break
 
-    def calculatePointProfile(self, points, model, library):
+    def calculatePointProfile(self, point, model, library):
         self.model = model
         self.library = library
         
-        self.pointToProfile = points[0]
         statName = self.getPointProfileStatNames()[0]
 
         self.removeClosedLayers(model)
-        if self.pointToProfile == None:
+        if point == None:
             return
         PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
-        
         #creating the plots of profiles
         for i in range(0 , model.rowCount()):
             self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
             self.profiles[i][statName] = []
             self.profiles[i]["l"] = []
             layer = self.profiles[i]["layer"]
-
             if layer:
                 try:
-                    point = self.tool.toLayerCoordinates(layer , QgsPoint(self.pointToProfile[0],self.pointToProfile[1]))
                     ident = layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue )
                 except:
                     ident = None
             else:
                 ident = None
-            #if ident is not None and ident.has_key(choosenBand+1):
             if ident is not None:
                 self.profiles[i][statName] = list(ident.results().values())
                 self.profiles[i]["l"] = list(ident.results().keys())
@@ -163,7 +158,7 @@ class DoProfile(QWidget):
             memRasterDriver = gdal.GetDriverByName('MEM')
             
             intersectedGeom = rasterGeom.intersection(geometry)
-            ogrGeom = ogr.CreateGeometryFromWkt(intersectedGeom.exportToWkt())
+            ogrGeom = ogr.CreateGeometryFromWkt(intersectedGeom.asWkt())
             
             bbox = intersectedGeom.boundingBox()
 
@@ -211,6 +206,8 @@ class DoProfile(QWidget):
             for bandNumber in range(1, rasterDS.RasterCount+1): 
                 rasterBand = rasterDS.GetRasterBand(bandNumber)
                 noData = rasterBand.GetNoDataValue()
+                if noData is None:
+                    noData = np.nan
                 scale = rasterBand.GetScale()
                 if scale is None:
                     scale = 1.0
@@ -218,7 +215,7 @@ class DoProfile(QWidget):
                 if offset is None:
                     offset = 0.0
                 srcArray = rasterBand.ReadAsArray(*srcOffset)
-                srcArray = srcArray*scale+offset 
+                srcArray = srcArray*scale+offset
                 masked = np.ma.MaskedArray(srcArray,
                             mask=np.logical_or.reduce((
                              srcArray == noData,
@@ -368,7 +365,7 @@ class DoProfile(QWidget):
             self.groupBox[i].setSizePolicy(sizePolicy)
             self.groupBox[i].setMinimumSize(QSize(0, 150))
             self.groupBox[i].setMaximumSize(QSize(16777215, 350))
-            self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiles[i]["layer"].name(), None, QApplication.UnicodeUTF8))
+            self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiles[i]["layer"].name(), None))
             self.groupBox[i].setObjectName("groupBox" + str(i))
 
             self.verticalLayout.append( QVBoxLayout(self.groupBox[i]) )
@@ -405,7 +402,7 @@ class DoProfile(QWidget):
             sizePolicy.setVerticalStretch(0)
             sizePolicy.setHeightForWidth(self.profilePushButton[i].sizePolicy().hasHeightForWidth())
             self.profilePushButton[i].setSizePolicy(sizePolicy)
-            self.profilePushButton[i].setText(QApplication.translate("GroupBox", "Copy to clipboard", None, QApplication.UnicodeUTF8))
+            self.profilePushButton[i].setText(QApplication.translate("GroupBox", "Copy to clipboard", None))
             self.profilePushButton[i].setObjectName(str(i))
             self.horizontalLayout.addWidget(self.profilePushButton[i])
 

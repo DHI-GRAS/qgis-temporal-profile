@@ -88,7 +88,7 @@ class PlottingTool(object):
             return plotWdg
         elif library == "Matplotlib" and has_mpl:
             from matplotlib.figure import Figure
-            from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
             fig = Figure( (1.0, 1.0), linewidth=0.0, subplotpars = matplotlib.figure.SubplotParams(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)    )
 
@@ -319,7 +319,7 @@ class PlottingTool(object):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 break
-        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".pdf","Portable Document Format (*.pdf)")
+        fileName, _ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".pdf","Portable Document Format (*.pdf)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QPrinter()
@@ -331,14 +331,12 @@ class PlottingTool(object):
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
 
-
-
     def outSVG(self, iface, wdg, mdl, library):
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
+        fileName, _ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QSvgGenerator()
@@ -353,7 +351,7 @@ class PlottingTool(object):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".png","Portable Network Graphics (*.png)")
+        fileName, _ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".png","Portable Network Graphics (*.png)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 QPixmap.grabWidget(wdg.plotWdg).save(fileName, "PNG")
