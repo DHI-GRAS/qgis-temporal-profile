@@ -36,8 +36,7 @@ from osgeo import osr
 from PyQt4.QtCore import Qt, QObject, SIGNAL
 from PyQt4.QtGui import QAction, QIcon, QStandardItemModel, QMessageBox, QColor
 from qgis.core import QgsMapLayerRegistry, QgsPoint, QgsGeometry, QGis
-from qgis.gui import QgsRubberBand
-
+from qgis.gui import QgsMessageBar
 
 import resources
 from ui.ptdockwidget import PTDockWidget
@@ -51,15 +50,12 @@ class TemporalSpectralProfilePlugin:
 
     POINT_SELECTION = 0
     SELECTED_POLYGON = 1
-    TEMPORARY_PLOYGON = 2
 
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.wdg = None
         self.pointTool = None
-
-
 
     def initGui(self):
         # create action 
@@ -74,7 +70,7 @@ class TemporalSpectralProfilePlugin:
         self.iface.addPluginToMenu("&Profile Tool", self.action)
         self.iface.addPluginToMenu("&Profile Tool", self.aboutAction)
         
-        #Init classe variables
+        #Init class variables
         self.pointTool = ProfiletoolMapTool(self.iface.mapCanvas(),self.action)        #the mouselistener
         self.dockOpened = False        #remember for not reopening dock if there's already one opened
         self.pointstoDraw = None    #Polyline in mapcanvas CRS analysed
@@ -82,12 +78,9 @@ class TemporalSpectralProfilePlugin:
         self.mdl = None                #the model whitch in are saved layers analysed caracteristics
         self.selectionmethod = 0                        #The selection method defined in option
         self.saveTool = self.canvas.mapTool()            #Save the standard mapttool for restoring it at the end
-        self.layerindex = None                            #for selection mode
-        self.previousLayer = None                        #for selection mode
         self.plotlibrary = None                            #The plotting library to use
         self.pointSelectionInstructions = "Click on a raster for temporal/spectral profile (right click to cancel then quit)"
         self.selectedPolygonInstructions = 'Use "Select Features" tool to select polygon(s) designating AOI for which temporal/spectral profile should be calculated'
-
 
     def unload(self):
         if not self.wdg is None:
@@ -95,7 +88,6 @@ class TemporalSpectralProfilePlugin:
         self.iface.removeToolBarIcon(self.action)
         self.iface.removePluginMenu("&Profile Tool", self.action)
         self.iface.removePluginMenu("&Profile Tool", self.aboutAction)
-
 
     def run(self):
         # first, check posibility
@@ -128,15 +120,6 @@ class TemporalSpectralProfilePlugin:
         self.connectPointMapTool()
         #init the mouse listener comportement and save the classic to restore it on quit
         self.canvas.setMapTool(self.pointTool)
-        #init the temp layer where the polyline is draw
-        self.polygon = False
-        self.rubberband = QgsRubberBand(self.canvas, self.polygon)
-        self.rubberband.setWidth(2)
-        self.rubberband.setColor(QColor(Qt.red))
-        #init the table where is saved the poyline
-        self.pointstoDraw = []
-        self.pointstoCal = []
-        self.lastClicked = [[-9999999999.9,9999999999.9]]
         
         #Help about what doing
         if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
@@ -157,7 +140,6 @@ class TemporalSpectralProfilePlugin:
                         self.removeLayer(row)
                         self.onLayersWillBeRemoved(layersIds)
                         break
-                    
 
     # Use for selected polygon option
     def selectionChanged(self, layer):
@@ -174,7 +156,6 @@ class TemporalSpectralProfilePlugin:
             crs.ImportFromProj4(str(layer.crs().toProj4()))
             self.doprofile.calculatePolygonProfile(fullGeometry, crs, self.mdl, self.plotlibrary)
 
-
 #************************************* Mouse listener actions ***********************************************
 # Used for point selection option
 
@@ -185,43 +166,16 @@ class TemporalSpectralProfilePlugin:
             if self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
                 pass
 
-    def rightClicked(self,position):    #used to quit the current action
-        if self.selectionmethod == 0:
-            mapPos = self.canvas.getCoordinateTransform().toMapCoordinates(position["x"],position["y"])
-            newPoints = [[mapPos.x(), mapPos.y()]]
-            #if newPoints == self.lastClicked: return # sometimes a strange "double click" is given
-            if len(self.pointstoDraw) > 0:
-                self.pointstoDraw = []
-                self.pointstoCal = []
-                self.rubberband.reset(self.polygon)
-            else:
-                self.cleaning()
-        if self.selectionmethod == 1:
-            try:
-                self.previousLayer.removeSelection( False )
-            except:
-                self.iface.mainWindow().statusBar().showMessage("error right click")
-            self.cleaning()
+    def rightClicked(self, point):    #used to quit the current action
+        self.cleaning()
 
+    def leftClicked(self, point):
+        self.doubleClicked(point)
 
-
-    def leftClicked(self,position):
-        self.doubleClicked(position)
-
-    def doubleClicked(self,position):
+    def doubleClicked(self, point):
         if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
-            #Validation of line
-            mapPos = self.canvas.getCoordinateTransform().toMapCoordinates(position["x"],position["y"])
-            newPoints = [[mapPos.x(), mapPos.y()]]
-            self.pointstoDraw += newPoints
-            #launch analyses
-            self.iface.mainWindow().statusBar().showMessage(str(self.pointstoDraw))
-            self.doprofile.calculatePointProfile(self.pointstoDraw,self.mdl, self.plotlibrary)
-            #Reset
-            self.pointstoDraw = []
-            #temp point to distinct leftclick and dbleclick
-            self.dblclktemp = newPoints
-            #self.iface.mainWindow().statusBar().showMessage(self.textquit0)
+            self.iface.mainWindow().statusBar().showMessage(str(point.x())+", "+str(point.y()))
+            self.doprofile.calculatePointProfile(point, self.mdl, self.plotlibrary)
         if self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
             return
 
@@ -229,14 +183,14 @@ class TemporalSpectralProfilePlugin:
     
     def checkIfOpening(self):
         if self.iface.mapCanvas().layerCount() == 0:                    #Check a layer is opened
-            QMessageBox.warning(self.iface.mainWindow(), "Profile", "First open any raster layer, please")
+            QMessageBox.warning(self.iface.mainWindow(), "Profile", "First open a raster layer, please")
             return False
 
         layer = self.iface.activeLayer()
         
-        if layer == None or not isProfilable(layer) :    #Check if a raster layer is opened and selectionned
+        if layer == None or not isProfilable(layer) :    #Check if a raster layer is opened and selected
             if self.mdl == None or self.mdl.rowCount() == 0:
-                QMessageBox.warning(self.iface.mainWindow(), "Profile Tool", "Please select one raster layer")
+                QMessageBox.warning(self.iface.mainWindow(), "Profile Tool", "Please select a raster layer")
                 return False
                 
         return True
@@ -248,35 +202,31 @@ class TemporalSpectralProfilePlugin:
         QObject.connect(self.pointTool, SIGNAL("doubleClicked"), self.doubleClicked)
         QObject.connect(self.pointTool, SIGNAL("deactivate"), self.deactivatePointMapTool)
         
-
     def deactivatePointMapTool(self):        #enable clean exit of the plugin
         QObject.disconnect(self.pointTool, SIGNAL("moved"), self.moved)
         QObject.disconnect(self.pointTool, SIGNAL("leftClicked"), self.leftClicked)
         QObject.disconnect(self.pointTool, SIGNAL("rightClicked"), self.rightClicked)
         QObject.disconnect(self.pointTool, SIGNAL("doubleClicked"), self.doubleClicked)
-        #QObject.disconnect(self.iface.mapCanvas(), SIGNAL("selectionChanged(QgsMapLayer *)"), self.selectionChanged)
-        self.rubberband.reset(self.polygon)
         self.iface.mainWindow().statusBar().showMessage("")
 
     def connectSelectedPolygonsTool(self):
         QObject.connect(self.iface.mapCanvas(), SIGNAL("selectionChanged(QgsMapLayer *)"), self.selectionChanged)
         
-    def deactivagteSelectedPolygonsTools(self):
+    def deactivateSelectedPolygonsTools(self):
         QObject.disconnect(self.iface.mapCanvas(), SIGNAL("selectionChanged(QgsMapLayer *)"), self.selectionChanged)
 
     def cleaning(self):            #used on right click
-        try:
-            self.previousLayer.removeSelection(False)
-        except:
-            pass
         self.canvas.unsetMapTool(self.pointTool)
         self.canvas.setMapTool(self.saveTool)
-        self.iface.mainWindow().statusBar().showMessage( "" )
+        self.iface.mainWindow().statusBar().showMessage("")
 
     def cleaning2(self):        #used when Dock dialog is closed
         QObject.disconnect(self.wdg.tableView,SIGNAL("clicked(QModelIndex)"), self._onClick)
-        self.deactivagteSelectedPolygonsTools() 
-        self.deactivatePointMapTool()
+        if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
+            self.deactivatePointMapTool()
+        else:
+            self.deactivateSelectedPolygonsTools()
+        self.selectionmethod = TemporalSpectralProfilePlugin.POINT_SELECTION
         QObject.disconnect(self.wdg.comboBox, SIGNAL("currentIndexChanged(int)"), self.selectionMethod)
         QObject.disconnect(QgsMapLayerRegistry.instance(), SIGNAL("layersWillBeRemoved (QStringList)"), self.onLayersWillBeRemoved)
         self.mdl = None
@@ -290,7 +240,7 @@ class TemporalSpectralProfilePlugin:
         if item == TemporalSpectralProfilePlugin.POINT_SELECTION:
             self.selectionmethod = TemporalSpectralProfilePlugin.POINT_SELECTION
             self.pointTool.setCursor(Qt.CrossCursor)
-            self.deactivagteSelectedPolygonsTools()
+            self.deactivateSelectedPolygonsTools()
             self.connectPointMapTool()
             if not self.canvas.mapTool() == self.pointTool:
                 self.canvas.setMapTool(self.pointTool)
@@ -339,13 +289,11 @@ class TemporalSpectralProfilePlugin:
                 self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
                                                    QgsMessageBar.WARNING, 5)
                 self.doprofile.xAxisSteps = None
-        
 
     #************************* tableview function ******************************************
 
-    def addLayer(self, layer = None):
-        if layer is None:
-            layer = self.iface.activeLayer()
+    def addLayer(self):
+        layer = self.iface.activeLayer()
         if isProfilable(layer):
             self.tableViewTool.addLayer(self.iface, self.mdl, layer)
 

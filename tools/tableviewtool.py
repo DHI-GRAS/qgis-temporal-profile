@@ -57,39 +57,7 @@ class TableViewTool(QObject):
             self.colourIndex = 0
         return colour
 
-    def addLayer(self , iface, mdl, layer1 = None):
-        if layer1 == None:
-            templist=[]
-            j=0
-            # Ask the layer by a input dialog 
-            for i in range(0, iface.mapCanvas().layerCount()):
-                donothing = False
-                layer = iface.mapCanvas().layer(i)
-                if isProfilable(layer):
-                    for j in range(0, mdl.rowCount()):
-                        if str(mdl.item(j,2).data(Qt.EditRole)) == str(layer.name()):
-                            donothing = True
-                else:
-                    donothing = True
-                    
-                if donothing == False:
-                    templist +=  [[layer, layer.name()]]
-                        
-            if len(templist) == 0:
-                QMessageBox.warning(iface.mainWindow(), "Profile tool", "No raster to add")
-                return
-            else:    
-                testqt, ok = QInputDialog.getItem(iface.mainWindow(), "Layer selector", "Choose layer", [templist[k][1] for k in range( len(templist) )], False)
-                if ok:
-                    for i in range (0,len(templist)):
-                        if templist[i][1] == testqt:
-                            layer2 = templist[i][0]
-                else:
-                    return
-        else : 
-            layer2 = layer1
-
-        #Complete the tableview
+    def addLayer(self , iface, mdl, layer):
         row = mdl.rowCount()
         mdl.insertRow(row)
         mdl.setData( mdl.index(row, 0, QModelIndex()), True, Qt.CheckStateRole)
@@ -97,23 +65,20 @@ class TableViewTool(QObject):
         lineColour = self.pickColour()
         mdl.setData( mdl.index(row, 1, QModelIndex()), QColor(lineColour) , Qt.BackgroundRole)
         mdl.item(row,1).setFlags(Qt.NoItemFlags) 
-        mdl.setData( mdl.index(row, 2, QModelIndex()), layer2.name())
+        mdl.setData( mdl.index(row, 2, QModelIndex()), layer.name())
         mdl.item(row,2).setFlags(Qt.NoItemFlags)  
-        mdl.setData( mdl.index(row, 3, QModelIndex()), layer2)
+        mdl.setData( mdl.index(row, 3, QModelIndex()), layer)
         mdl.item(row,3).setFlags(Qt.NoItemFlags)
         mdl.setData(mdl.index(row, 4, QModelIndex()), "")
         mdl.item(row,4).setFlags(Qt.NoItemFlags)
-        mdl.setData(mdl.index(row, 5, QModelIndex()), layer2.name()+str(uuid.uuid4()))
+        mdl.setData(mdl.index(row, 5, QModelIndex()), layer.name()+str(uuid.uuid4()))
         mdl.item(row,5).setFlags(Qt.NoItemFlags)
         self.layerAddedOrRemoved.emit()
         
-        
     def removeLayer(self, mdl, index):
-
             try:
                 mdl.removeRow(index)
                 self.layerAddedOrRemoved.emit()
-
             except:
                 return
 
@@ -133,7 +98,6 @@ class TableViewTool(QObject):
                     return i
         return None
 
-        
     def onClick(self, iface, wdg, mdl, plotlibrary, index):                    #action when clicking the tableview
         item = mdl.itemFromIndex(index)
         name = mdl.item(index.row(),5).data(Qt.EditRole)
@@ -147,5 +111,3 @@ class TableViewTool(QObject):
             PlottingTool().changeAttachCurve(wdg, plotlibrary, isVisible, name)
         else:
             return
-
-        
