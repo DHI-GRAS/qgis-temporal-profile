@@ -178,23 +178,12 @@ class TemporalSpectralProfilePlugin:
 #************************************* Mouse listener actions ***********************************************
 # Used for point selection option
 
-    def moved(self,position):            #draw the polyline on the temp layer (rubberband)
-        if self.selectionmethod == 0:
-            if len(self.pointstoDraw) > 0:
-                #Get mouse coords
-                mapPos = self.canvas.getCoordinateTransform().toMapCoordinates(position["x"],position["y"])
-                #Draw on temp layer
-                if QGis.QGIS_VERSION_INT >= 10900:
-                    self.rubberband.reset(QGis.Line)
-                else:
-                    self.rubberband.reset(self.polygon)
-                for i in range(0,len(self.pointstoDraw)):
-                     self.rubberband.addPoint(QgsPoint(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
-                self.rubberband.addPoint(QgsPoint(mapPos.x(),mapPos.y()))
-        if self.selectionmethod == 1:
-            return
-
-
+    def moved(self, point):
+        if self.wdg and not self.wdg.cbPlotWhenClick.isChecked():
+            if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
+                self.doubleClicked(point)
+            if self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
+                pass
 
     def rightClicked(self,position):    #used to quit the current action
         if self.selectionmethod == 0:
