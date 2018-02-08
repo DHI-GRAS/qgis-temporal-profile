@@ -35,6 +35,9 @@ from __future__ import absolute_import
 from builtins import str
 from builtins import range
 
+import platform
+import os
+
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QObject, QModelIndex, pyqtSignal
 from qgis.PyQt.QtWidgets import QDockWidget
@@ -51,10 +54,6 @@ try:
     matplotlib_loaded = True
 except ImportError:
     matplotlib_loaded = False
-
-import platform
-import os
-
 
 from .ComboBoxDelegate import ComboBoxDelegate
 uiFilePath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'profiletool.ui'))
@@ -202,12 +201,9 @@ class PTDockWidget(QDockWidget, FormClass):
                 mpltoolbar = matplotlib.backends.backend_qt5agg.NavigationToolbar2QTAgg(self.plotWdg, self.frame_for_plot)
             except AttributeError:
                 mpltoolbar = matplotlib.backends.backend_qt5agg.NavigationToolbar2QT(self.plotWdg, self.frame_for_plot)
-            #layout.addWidget( mpltoolbar )
             self.stackedWidget.insertWidget(1, mpltoolbar)
             self.stackedWidget.setCurrentIndex(1)
             lstActions = mpltoolbar.actions()
-            #mpltoolbar.removeAction( lstActions[ 7 ] )
-            #mpltoolbar.removeAction( lstActions[ 8 ] )
 
     # generic save as button
     def saveAs(self):

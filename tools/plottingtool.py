@@ -59,7 +59,6 @@ except:
     pass
 
 
-
 class PlottingTool(object):
 
     def changePlotWidget(self, library, frame_for_plot):
@@ -153,6 +152,11 @@ class PlottingTool(object):
                     # Create new line
                     line = wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = profileId)[0]
                 line.set_visible(isVisible)
+                # X-axis have to be set before wdg is redrawn in changeColor, otherwise and
+                # exception is sometimes thrown when time-based axis is used.
+                minimumValueX = min( z for z in profiles[i]["l"])
+                maximumValueX = max( z for z in profiles[i]["l"])
+                wdg.plotWdg.figure.get_axes()[0].set_xlim([minimumValueX, maximumValueX])
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), profileId)
 
     def findMin(self,profiles, profileName, nr):
@@ -269,7 +273,6 @@ class PlottingTool(object):
                     wdg.plotWdg.draw()
                     break
 
-
     def changeAttachCurve(self, wdg, library, isVisible, name):                #Action when clicking the tableview - checkstate
         if library == "Qwt5":
             for curve in wdg.plotWdg.itemList():
@@ -285,13 +288,11 @@ class PlottingTool(object):
                     wdg.plotWdg.draw()
                     break
 
-
     def manageMatplotlibAxe(self, axe1):
         axe1.grid(True)
         axe1.tick_params(axis = "both", which = "major", direction= "out", length=10, width=1, bottom = True, top = False, left = True, right = False)
         axe1.minorticks_on()
         axe1.tick_params(axis = "both", which = "minor", direction= "out", length=5, width=1, bottom = True, top = False, left = True, right = False)
-
 
     def outPrint(self, iface, wdg, mdl, library): # Postscript file rendering doesn't work properly yet.
         for i in range (0,mdl.rowCount()):
@@ -312,7 +313,6 @@ class PlottingTool(object):
                     wdg.plotWdg.print_(printer)
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
-
 
     def outPDF(self, iface, wdg, mdl, library):
         for i in range (0,mdl.rowCount()):

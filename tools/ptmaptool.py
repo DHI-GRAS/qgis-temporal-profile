@@ -34,6 +34,7 @@ from qgis.PyQt.QtGui import QCursor
 from qgis.gui import QgsMapTool
 from qgis.core import QgsPointXY
 
+
 class ProfiletoolMapTool(QgsMapTool):
 
     moved = pyqtSignal(QgsPointXY)
@@ -45,7 +46,6 @@ class ProfiletoolMapTool(QgsMapTool):
         QgsMapTool.__init__(self,canvas)
         self.canvas = canvas
         self.cursor = QCursor(Qt.CrossCursor)
-        self.button = button
 
     def canvasMoveEvent(self,event):
         self.moved.emit(event.originalMapPoint())
@@ -62,12 +62,6 @@ class ProfiletoolMapTool(QgsMapTool):
     def activate(self):
         QgsMapTool.activate(self)
         self.canvas.setCursor(self.cursor)
-        self.button.setCheckable(True)
-        self.button.setChecked(True)
-
-    def deactivate(self):
-        self.button.setCheckable(False)
-        QgsMapTool.deactivate(self)
 
     def isZoomTool(self):
         return False

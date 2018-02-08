@@ -41,8 +41,7 @@ from qgis.PyQt.QtCore import Qt, QObject
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
 from qgis.PyQt.QtGui import QIcon, QStandardItemModel, QColor
 from qgis.core import QgsProject, QgsPointXY, QgsGeometry, QgsWkbTypes
-from qgis.gui import QgsMapToolIdentifyFeature
-
+from qgis.gui import QgsMessageBar
 
 from . import resources
 from .ui.ptdockwidget import PTDockWidget
@@ -56,15 +55,12 @@ class TemporalSpectralProfilePlugin(object):
 
     POINT_SELECTION = 0
     SELECTED_POLYGON = 1
-    TEMPORARY_PLOYGON = 2
 
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.wdg = None
         self.pointTool = None
-
-
 
     def initGui(self):
         # create action 
@@ -79,18 +75,15 @@ class TemporalSpectralProfilePlugin(object):
         self.iface.addPluginToMenu("&Profile Tool", self.action)
         self.iface.addPluginToMenu("&Profile Tool", self.aboutAction)
         
-        #Init classe variables
+        #Init class variables
         self.pointTool = ProfiletoolMapTool(self.iface.mapCanvas(),self.action)        #the mouselistener
         self.dockOpened = False        #remember for not reopening dock if there's already one opened
         self.mdl = None                #the model whitch in are saved layers analysed caracteristics
         self.selectionmethod = 0                        #The selection method defined in option
         self.saveTool = self.canvas.mapTool()            #Save the standard mapttool for restoring it at the end
-        self.layerindex = None                            #for selection mode
-        self.previousLayer = None                        #for selection mode
         self.plotlibrary = None                            #The plotting library to use
         self.pointSelectionInstructions = "Click on a raster for temporal/spectral profile (right click to cancel then quit)"
         self.selectedPolygonInstructions = 'Use "Select Features" tool to select polygon(s) designating AOI for which temporal/spectral profile should be calculated'
-
 
     def unload(self):
         if not self.wdg is None:
@@ -98,7 +91,6 @@ class TemporalSpectralProfilePlugin(object):
         self.iface.removeToolBarIcon(self.action)
         self.iface.removePluginMenu("&Profile Tool", self.action)
         self.iface.removePluginMenu("&Profile Tool", self.aboutAction)
-
 
     def run(self):
         # first, check posibility
@@ -138,7 +130,7 @@ class TemporalSpectralProfilePlugin(object):
         elif self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
             self.iface.mainWindow().statusBar().showMessage(self.selectedPolygonInstructions)
             
-        QgsProject.instance().layersWillBeRemoved .connect(self.onLayersWillBeRemoved)
+        QgsProject.instance().layersWillBeRemoved.connect(self.onLayersWillBeRemoved)
 
 #************************************* Canvas listener actions **********************************************
     
@@ -151,7 +143,6 @@ class TemporalSpectralProfilePlugin(object):
                         self.removeLayer(row)
                         self.onLayersWillBeRemoved(layersIds)
                         break
-                    
 
     # Use for selected polygon option
     def selectionChanged(self, layer):
@@ -167,7 +158,6 @@ class TemporalSpectralProfilePlugin(object):
             crs = osr.SpatialReference()
             crs.ImportFromProj4(str(layer.crs().toProj4()))
             self.doprofile.calculatePolygonProfile(fullGeometry, crs, self.mdl, self.plotlibrary)
-
 
 #************************************* Mouse listener actions ***********************************************
 # Used for point selection option
@@ -196,14 +186,14 @@ class TemporalSpectralProfilePlugin(object):
     
     def checkIfOpening(self):
         if self.iface.mapCanvas().layerCount() == 0:                    #Check a layer is opened
-            QMessageBox.warning(self.iface.mainWindow(), "Profile", "First open any raster layer, please")
+            QMessageBox.warning(self.iface.mainWindow(), "Profile", "First open a raster layer, please")
             return False
 
         layer = self.iface.activeLayer()
         
-        if layer == None or not isProfilable(layer) :    #Check if a raster layer is opened and selectionned
+        if layer == None or not isProfilable(layer) :    #Check if a raster layer is opened and selected
             if self.mdl == None or self.mdl.rowCount() == 0:
-                QMessageBox.warning(self.iface.mainWindow(), "Profile Tool", "Please select one raster layer")
+                QMessageBox.warning(self.iface.mainWindow(), "Profile Tool", "Please select a raster layer")
                 return False
                 
         return True
@@ -214,7 +204,6 @@ class TemporalSpectralProfilePlugin(object):
         self.pointTool.leftClicked.connect(self.leftClicked)
         self.pointTool.doubleClicked.connect(self.doubleClicked)
         
-
     def deactivatePointMapTool(self):        #enable clean exit of the plugin
         self.pointTool.moved.disconnect(self.moved)
         self.pointTool.leftClicked.disconnect(self.leftClicked)
@@ -229,13 +218,9 @@ class TemporalSpectralProfilePlugin(object):
         self.iface.mapCanvas().selectionChanged.disconnect(self.selectionChanged)
 
     def cleaning(self):            #used on right click
-        try:
-            self.previousLayer.removeSelection(False)
-        except:
-            pass
         self.canvas.unsetMapTool(self.pointTool)
         self.canvas.setMapTool(self.saveTool)
-        self.iface.mainWindow().statusBar().showMessage( "" )
+        self.iface.mainWindow().statusBar().showMessage("")
 
     def cleaning2(self):        #used when Dock dialog is closed
         self.wdg.tableView.clicked.disconnect(self._onClick)
@@ -306,7 +291,6 @@ class TemporalSpectralProfilePlugin(object):
                 self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
                                                    QgsMessageBar.WARNING, 5)
                 self.doprofile.xAxisSteps = None
-        
 
     #************************* tableview function ******************************************
 

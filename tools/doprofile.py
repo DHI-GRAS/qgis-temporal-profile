@@ -48,6 +48,7 @@ from .plottingtool import PlottingTool
 from osgeo import gdal, ogr
 import numpy as np
 
+
 class DoProfile(QWidget):
 
     def __init__(self, iface, dockwidget1 , tool1 , plugin, parent = None):
@@ -253,6 +254,7 @@ class DoProfile(QWidget):
             return
         
         elif self.xAxisSteps[0] == "Timesteps":
+            self.changeXAxisStepType("numeric")
             for profile in self.profiles:
                 stepsNum = len(profile["l"])
                 startTime = self.xAxisSteps[1]
@@ -328,14 +330,8 @@ class DoProfile(QWidget):
             PlottingTool().resetAxis(self.dockwidget, self.library)
     
     def mapToPixel(self, mX, mY, geoTransform):
-        # GDAL 1.x
-        try:
-            (pX, pY) = gdal.ApplyGeoTransform(
-                gdal.InvGeoTransform(geoTransform)[1], mX, mY)
-        # GDAL 2.x
-        except TypeError:
-            (pX, pY) = gdal.ApplyGeoTransform(
-                gdal.InvGeoTransform(geoTransform), mX, mY)
+        (pX, pY) = gdal.ApplyGeoTransform(
+            gdal.InvGeoTransform(geoTransform), mX, mY)
             
         return (int(pX), int(pY))            
     
@@ -429,7 +425,6 @@ class DoProfile(QWidget):
             text += "\n"
         self.clipboard.setText(text)
 
-
     def reScalePlot(self, param):                         # called when a spinbox value changed
         if type(param) != float:    
             # don't execute it twice, for both valueChanged(int) and valueChanged(str) signals
@@ -438,11 +433,3 @@ class DoProfile(QWidget):
             # don't execute it on init
             return
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library, autoMode = False)
-
-
-    def getProfileCurve(self,nr):
-        try:
-            return self.profiles[nr]["curve"]
-        except:
-            return None
-
