@@ -173,10 +173,11 @@ class TemporalSpectralProfilePlugin(object):
 # Used for point selection option
 
     def moved(self, point):
-        if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
-            return
-        if self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
-            return
+        if self.wdg and not self.wdg.cbPlotWhenClick.isChecked():
+            if self.selectionmethod == TemporalSpectralProfilePlugin.POINT_SELECTION:
+                self.doubleClicked(point)
+            if self.selectionmethod == TemporalSpectralProfilePlugin.SELECTED_POLYGON:
+                pass
 
     def rightClicked(self, point):    #used to quit the current action
             self.cleaning()
