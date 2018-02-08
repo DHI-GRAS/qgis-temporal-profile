@@ -45,6 +45,20 @@ from .utils import isProfilable
 class TableViewTool(QObject):
     
     layerAddedOrRemoved = pyqtSignal() # Emitted when a new layer is added
+    
+    # Colour Brewer Set 1: http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=9
+    colourSet = [(228,26,28), (55,126,184), (77,175,74), (152,78,163), (255,127,0),
+                 (255,255,51), (166,86,40), (247,129,191), (153,153,153)]
+    colourIndex = 0
+
+    def pickColour(self):
+        colour = self.colourSet[self.colourIndex]
+        colour = QColor(colour[0], colour[1], colour[2])
+        
+        self.colourIndex = self.colourIndex + 1
+        if self.colourIndex == len(self.colourSet):
+            self.colourIndex = 0
+        return colour
 
     def addLayer(self , iface, mdl, layer1 = None):
         if layer1 == None:
@@ -81,14 +95,14 @@ class TableViewTool(QObject):
         #Complete the tableview
         row = mdl.rowCount()
         mdl.insertRow(row)
-        mdl.setData( mdl.index(row, 0, QModelIndex())  ,True, Qt.CheckStateRole)
+        mdl.setData( mdl.index(row, 0, QModelIndex()), True, Qt.CheckStateRole)
         mdl.item(row,0).setFlags(Qt.ItemIsSelectable) 
-        lineColour = Qt.red
-        mdl.setData( mdl.index(row, 1, QModelIndex())  ,QColor(lineColour) , Qt.BackgroundRole)
+        lineColour = self.pickColour()
+        mdl.setData( mdl.index(row, 1, QModelIndex()), QColor(lineColour) , Qt.BackgroundRole)
         mdl.item(row,1).setFlags(Qt.NoItemFlags) 
-        mdl.setData( mdl.index(row, 2, QModelIndex())  ,layer2.name())
+        mdl.setData( mdl.index(row, 2, QModelIndex()), layer2.name())
         mdl.item(row,2).setFlags(Qt.NoItemFlags)  
-        mdl.setData( mdl.index(row, 3, QModelIndex())  ,layer2)
+        mdl.setData( mdl.index(row, 3, QModelIndex()), layer2)
         mdl.item(row,3).setFlags(Qt.NoItemFlags)
         mdl.setData(mdl.index(row, 4, QModelIndex()), "")
         mdl.item(row,4).setFlags(Qt.NoItemFlags)
