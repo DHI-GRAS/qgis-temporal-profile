@@ -14,7 +14,10 @@ qgisMinimumVersion=2.12
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=1.2.2
+changelog=1.3.0
+    - Add functionality to plot point profiles without clicking.
+    - Do not use the same colour for all newly added layers.
+    1.2.2
     - Bug fixes
     1.2.1
     - Add option to set X-axis time steps from NetCDF time dimension.
