@@ -30,20 +30,24 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from builtins import str
+from builtins import range
+from builtins import object
 
 from math import log10, floor, ceil, sqrt, isnan
 
-from qgis.core import *
-from qgis.gui import *
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.QtSvg import *
+from qgis.PyQt.QtCore import Qt, QSize
+from qgis.PyQt.QtWidgets import QSizePolicy, QFileDialog
+from qgis.PyQt.QtGui import QPen, QPixmap, QColor
+from qgis.PyQt.QtPrintSupport import QPrintDialog, QPrinter
+from qgis.PyQt.QtSvg import QSvgGenerator
 import platform
 
 has_qwt = False
 has_mpl = False
 try:
-    from PyQt4.Qwt5 import *
+    from PyQt4.Qwt5 import QwtPlot, QwtPlotZoomer, QwtPicker, QwtPlotPicker, \
+                           QwtPlotGrid, QwtPlotCurve, QwtPlotItem, Qwt
     has_qwt = True
     import itertools # only needed for Qwt plot
 except:
@@ -55,8 +59,7 @@ except:
     pass
 
 
-
-class PlottingTool:
+class PlottingTool(object):
 
     def changePlotWidget(self, library, frame_for_plot):
         if library == "Qwt5" and has_qwt:
@@ -84,7 +87,7 @@ class PlottingTool:
             return plotWdg
         elif library == "Matplotlib" and has_mpl:
             from matplotlib.figure import Figure
-            from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
             fig = Figure( (1.0, 1.0), linewidth=0.0, subplotpars = matplotlib.figure.SubplotParams(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)    )
 
@@ -149,6 +152,11 @@ class PlottingTool:
                     # Create new line
                     line = wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = profileId)[0]
                 line.set_visible(isVisible)
+                # X-axis have to be set before wdg is redrawn in changeColor, otherwise and
+                # exception is sometimes thrown when time-based axis is used.
+                minimumValueX = min( z for z in profiles[i]["l"])
+                maximumValueX = max( z for z in profiles[i]["l"])
+                wdg.plotWdg.figure.get_axes()[0].set_xlim([minimumValueX, maximumValueX])
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), profileId)
 
     def findMin(self,profiles, profileName, nr):
@@ -265,7 +273,6 @@ class PlottingTool:
                     wdg.plotWdg.draw()
                     break
 
-
     def changeAttachCurve(self, wdg, library, isVisible, name):                #Action when clicking the tableview - checkstate
         if library == "Qwt5":
             for curve in wdg.plotWdg.itemList():
@@ -281,20 +288,18 @@ class PlottingTool:
                     wdg.plotWdg.draw()
                     break
 
-
     def manageMatplotlibAxe(self, axe1):
         axe1.grid(True)
         axe1.tick_params(axis = "both", which = "major", direction= "out", length=10, width=1, bottom = True, top = False, left = True, right = False)
         axe1.minorticks_on()
         axe1.tick_params(axis = "both", which = "minor", direction= "out", length=5, width=1, bottom = True, top = False, left = True, right = False)
 
-
     def outPrint(self, iface, wdg, mdl, library): # Postscript file rendering doesn't work properly yet.
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".ps","PostScript Format (*.ps)")
+        fileName, __, __ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".ps","PostScript Format (*.ps)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QPrinter()
@@ -309,13 +314,12 @@ class PlottingTool:
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
 
-
     def outPDF(self, iface, wdg, mdl, library):
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 break
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".pdf","Portable Document Format (*.pdf)")
+        fileName, _ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".pdf","Portable Document Format (*.pdf)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QPrinter()
@@ -327,14 +331,12 @@ class PlottingTool:
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
 
-
-
     def outSVG(self, iface, wdg, mdl, library):
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
+        fileName, _ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QSvgGenerator()
@@ -349,7 +351,7 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".png","Portable Network Graphics (*.png)")
+        fileName, _ = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".png","Portable Network Graphics (*.png)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 QPixmap.grabWidget(wdg.plotWdg).save(fileName, "PNG")

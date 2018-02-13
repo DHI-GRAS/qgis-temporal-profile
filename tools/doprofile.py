@@ -31,21 +31,22 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
 import math
 import re
 from datetime import datetime, timedelta
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
-from PyQt4.QtSvg import * # required in some distros
-from qgis.core import *
-from qgis.gui import *
-from plottingtool import PlottingTool
+from qgis.PyQt.QtCore import Qt, QModelIndex, QSize, QObject
+from qgis.PyQt.QtWidgets import QWidget, QGroupBox, QApplication, QSizePolicy, QTableView, QVBoxLayout, QPushButton, QApplication, QHBoxLayout
+from qgis.PyQt.QtGui import QFont, QStandardItemModel
+from qgis.core import QgsPoint, QgsRectangle, QgsGeometry, QgsRaster
+from qgis.gui import QgsMessageBar
+from .plottingtool import PlottingTool
 
 from osgeo import gdal, ogr
 import numpy as np
-from PyQt4.QtCore import SIGNAL,SLOT,pyqtSignature
 
 
 class DoProfile(QWidget):
@@ -84,38 +85,33 @@ class DoProfile(QWidget):
                 self.removeClosedLayers(model1)
                 break
 
-    def calculatePointProfile(self, points, model, library):
+    def calculatePointProfile(self, point, model, library):
         self.model = model
         self.library = library
         
-        self.pointToProfile = points[0]
         statName = self.getPointProfileStatNames()[0]
 
         self.removeClosedLayers(model)
-        if self.pointToProfile == None:
+        if point == None:
             return
         PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
-        
         #creating the plots of profiles
         for i in range(0 , model.rowCount()):
             self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
             self.profiles[i][statName] = []
             self.profiles[i]["l"] = []
             layer = self.profiles[i]["layer"]
-
             if layer:
                 try:
-                    point = self.tool.toLayerCoordinates(layer , QgsPoint(self.pointToProfile[0],self.pointToProfile[1]))
                     ident = layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue )
                 except:
                     ident = None
             else:
                 ident = None
-            #if ident is not None and ident.has_key(choosenBand+1):
             if ident is not None:
-                self.profiles[i][statName] = ident.results().values()
-                self.profiles[i]["l"] = ident.results().keys()
+                self.profiles[i][statName] = list(ident.results().values())
+                self.profiles[i]["l"] = list(ident.results().keys())
         
         self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
@@ -163,7 +159,7 @@ class DoProfile(QWidget):
             memRasterDriver = gdal.GetDriverByName('MEM')
             
             intersectedGeom = rasterGeom.intersection(geometry)
-            ogrGeom = ogr.CreateGeometryFromWkt(intersectedGeom.exportToWkt())
+            ogrGeom = ogr.CreateGeometryFromWkt(intersectedGeom.asWkt())
             
             bbox = intersectedGeom.boundingBox()
 
@@ -211,6 +207,8 @@ class DoProfile(QWidget):
             for bandNumber in range(1, rasterDS.RasterCount+1): 
                 rasterBand = rasterDS.GetRasterBand(bandNumber)
                 noData = rasterBand.GetNoDataValue()
+                if noData is None:
+                    noData = np.nan
                 scale = rasterBand.GetScale()
                 if scale is None:
                     scale = 1.0
@@ -218,7 +216,7 @@ class DoProfile(QWidget):
                 if offset is None:
                     offset = 0.0
                 srcArray = rasterBand.ReadAsArray(*srcOffset)
-                srcArray = srcArray*scale+offset 
+                srcArray = srcArray*scale+offset
                 masked = np.ma.MaskedArray(srcArray,
                             mask=np.logical_or.reduce((
                              srcArray == noData,
@@ -256,6 +254,7 @@ class DoProfile(QWidget):
             return
         
         elif self.xAxisSteps[0] == "Timesteps":
+            self.changeXAxisStepType("numeric")
             for profile in self.profiles:
                 stepsNum = len(profile["l"])
                 startTime = self.xAxisSteps[1]
@@ -308,7 +307,7 @@ class DoProfile(QWidget):
                 # or length of provided x-axis steps
                 stepsNum = min(len(self.xAxisSteps), len(profile["l"]))
                 profile["l"] = self.xAxisSteps[:stepsNum]
-                for stat in profile.keys():
+                for stat in list(profile.keys()):
                     if stat == "l" or stat == "layer":
                         continue
                     profile[stat] = profile[stat][:stepsNum]
@@ -316,7 +315,7 @@ class DoProfile(QWidget):
                 # If any x-axis step is a NaN then remove the corresponding
                 # value from profile
                 nans = [i for i, x in enumerate(profile["l"]) if math.isnan(x)]
-                for stat in profile.keys():
+                for stat in list(profile.keys()):
                     if stat == "layer":
                         continue
                     profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
@@ -331,14 +330,8 @@ class DoProfile(QWidget):
             PlottingTool().resetAxis(self.dockwidget, self.library)
     
     def mapToPixel(self, mX, mY, geoTransform):
-        # GDAL 1.x
-        try:
-            (pX, pY) = gdal.ApplyGeoTransform(
-                gdal.InvGeoTransform(geoTransform)[1], mX, mY)
-        # GDAL 2.x
-        except TypeError:
-            (pX, pY) = gdal.ApplyGeoTransform(
-                gdal.InvGeoTransform(geoTransform), mX, mY)
+        (pX, pY) = gdal.ApplyGeoTransform(
+            gdal.InvGeoTransform(geoTransform), mX, mY)
             
         return (int(pX), int(pY))            
     
@@ -368,7 +361,7 @@ class DoProfile(QWidget):
             self.groupBox[i].setSizePolicy(sizePolicy)
             self.groupBox[i].setMinimumSize(QSize(0, 150))
             self.groupBox[i].setMaximumSize(QSize(16777215, 350))
-            self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiles[i]["layer"].name(), None, QApplication.UnicodeUTF8))
+            self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiles[i]["layer"].name(), None))
             self.groupBox[i].setObjectName("groupBox" + str(i))
 
             self.verticalLayout.append( QVBoxLayout(self.groupBox[i]) )
@@ -378,7 +371,7 @@ class DoProfile(QWidget):
             self.tableView[i].setObjectName("tableView" + str(i))
             font = QFont("Arial", 8)
             columns = len(self.profiles[i]["l"])
-            rowNames = self.profiles[i].keys()
+            rowNames = list(self.profiles[i].keys())
             rowNames.remove("layer") # holds the QgsMapLayer instance
             rowNames.remove("l") # holds the band number
             rows = len(rowNames)
@@ -405,7 +398,7 @@ class DoProfile(QWidget):
             sizePolicy.setVerticalStretch(0)
             sizePolicy.setHeightForWidth(self.profilePushButton[i].sizePolicy().hasHeightForWidth())
             self.profilePushButton[i].setSizePolicy(sizePolicy)
-            self.profilePushButton[i].setText(QApplication.translate("GroupBox", "Copy to clipboard", None, QApplication.UnicodeUTF8))
+            self.profilePushButton[i].setText(QApplication.translate("GroupBox", "Copy to clipboard", None))
             self.profilePushButton[i].setObjectName(str(i))
             self.horizontalLayout.addWidget(self.profilePushButton[i])
 
@@ -413,13 +406,13 @@ class DoProfile(QWidget):
             self.verticalLayout[i].addLayout(self.horizontalLayout)
 
             self.VLayout.addWidget(self.groupBox[i])
-            QObject.connect(self.profilePushButton[i], SIGNAL("clicked()"), self.copyTable)
+            self.profilePushButton[i].clicked.connect(self.copyTable)
 
     def copyTable(self):                            #Writing the table to clipboard in excel form
         nr = int( self.sender().objectName() )
         self.clipboard = QApplication.clipboard()
         text = "band"
-        rowNames = self.profiles[nr].keys()
+        rowNames = list(self.profiles[nr].keys())
         rowNames.remove("layer")
         rowNames.remove("l")
         for name in rowNames:
@@ -432,7 +425,6 @@ class DoProfile(QWidget):
             text += "\n"
         self.clipboard.setText(text)
 
-
     def reScalePlot(self, param):                         # called when a spinbox value changed
         if type(param) != float:    
             # don't execute it twice, for both valueChanged(int) and valueChanged(str) signals
@@ -441,11 +433,3 @@ class DoProfile(QWidget):
             # don't execute it on init
             return
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library, autoMode = False)
-
-
-    def getProfileCurve(self,nr):
-        try:
-            return self.profiles[nr]["curve"]
-        except:
-            return None
-

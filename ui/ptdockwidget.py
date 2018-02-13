@@ -30,40 +30,40 @@
 * with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ***************************************************************************
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
 
-from PyQt4 import uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+import platform
+import os
 
-from qgis.core import *
-from qgis.gui import *
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import Qt, QObject, QModelIndex, pyqtSignal
+from qgis.PyQt.QtWidgets import QDockWidget
 
-from ..tools.plottingtool import *
-#from ..profileplugin import ProfilePlugin
+from ..tools.plottingtool import PlottingTool
 
 try:
-    from PyQt4.Qwt5 import *
+    from PyQt4 import Qwt5
     Qwt5_loaded = True
 except ImportError:
     Qwt5_loaded = False
 try:
-    #from matplotlib import *
     import matplotlib
     matplotlib_loaded = True
 except ImportError:
     matplotlib_loaded = False
 
-import platform
-import os
-
-
-from ComboBoxDelegate import ComboBoxDelegate
+from .ComboBoxDelegate import ComboBoxDelegate
 uiFilePath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'profiletool.ui'))
 FormClass = uic.loadUiType(uiFilePath)[0]
 
 class PTDockWidget(QDockWidget, FormClass):
 
     TITLE = "ProfileTool"
+
+    closed = pyqtSignal()
 
     def __init__(self, parent, iface1, mdl1):
         QDockWidget.__init__(self, parent)
@@ -77,10 +77,10 @@ class PTDockWidget(QDockWidget, FormClass):
         self.mdl = mdl1
         #self.showed = False
         
-        QObject.connect(self.mdl, SIGNAL("rowsInserted(QModelIndex, int, int)"), self.addPersistentEditorForRows)
-        QObject.connect(self.cboXAxis, SIGNAL("currentIndexChanged(int)"), self.changeXAxisLabeling)
-        QObject.connect(self.butLoadXAxisSteps, SIGNAL("clicked()"), self.loadXAxisStepsFromFile)
-        QObject.connect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
+        self.mdl.rowsInserted.connect(self.addPersistentEditorForRows)
+        self.cboXAxis.currentIndexChanged.connect(self.changeXAxisLabeling)
+        self.butLoadXAxisSteps.clicked.connect(self.loadXAxisStepsFromFile)
+        self.butSaveAs.clicked.connect(self.saveAs)
 
     def showIt(self):
         self.location = Qt.BottomDockWidgetArea
@@ -97,6 +97,7 @@ class PTDockWidget(QDockWidget, FormClass):
         self.tableView.setColumnWidth(2, 150)
         self.tableView.setColumnHidden(3 , True)
         self.tableView.setColumnWidth(4, 30)
+        self.tableView.setColumnHidden(5 , True)
         self.tableView.setItemDelegateForColumn(4,ComboBoxDelegate(self.tableView, ["value"]))
         hh = self.tableView.horizontalHeader()
         hh.setStretchLastSection(True)
@@ -155,15 +156,15 @@ class PTDockWidget(QDockWidget, FormClass):
             self.cbTimeDimension.setEnabled(True)
             
     def loadXAxisStepsFromFile(self):
-        fileName = QFileDialog.getOpenFileName(self, "Load X axis steps","","Text file (*.txt)")
+        fileName, __ = QFileDialog.getOpenFileName(self, "Load X axis steps","","Text file (*.txt)")
         if fileName:
             with open(fileName) as fp:
                 self.leXAxisSteps.setText(fp.readline())
                 self.leXAxisSteps.editingFinished.emit()
 
     def closeEvent(self, event):
-        self.emit( SIGNAL( "closed(PyQt_PyObject)" ), self )
-        QObject.disconnect(self.butSaveAs, SIGNAL("clicked()"), self.saveAs)
+        self.closed.emit()
+        self.butSaveAs.clicked.disconnect(self.saveAs)
         return QDockWidget.closeEvent(self, event)
 
     def addPlotWidget(self, library):
@@ -197,15 +198,12 @@ class PTDockWidget(QDockWidget, FormClass):
             self.plotWdg = PlottingTool().changePlotWidget("Matplotlib", self.frame_for_plot)
             layout.addWidget(self.plotWdg)
             try:
-                mpltoolbar = matplotlib.backends.backend_qt4agg.NavigationToolbar2QTAgg(self.plotWdg, self.frame_for_plot)
+                mpltoolbar = matplotlib.backends.backend_qt5agg.NavigationToolbar2QTAgg(self.plotWdg, self.frame_for_plot)
             except AttributeError:
-                mpltoolbar = matplotlib.backends.backend_qt4agg.NavigationToolbar2QT(self.plotWdg, self.frame_for_plot)
-            #layout.addWidget( mpltoolbar )
+                mpltoolbar = matplotlib.backends.backend_qt5agg.NavigationToolbar2QT(self.plotWdg, self.frame_for_plot)
             self.stackedWidget.insertWidget(1, mpltoolbar)
             self.stackedWidget.setCurrentIndex(1)
             lstActions = mpltoolbar.actions()
-            #mpltoolbar.removeAction( lstActions[ 7 ] )
-            #mpltoolbar.removeAction( lstActions[ 8 ] )
 
     # generic save as button
     def saveAs(self):
