@@ -35,17 +35,16 @@ import math
 import re
 from datetime import datetime, timedelta
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
-from PyQt4.QtSvg import * # required in some distros
-from qgis.core import *
-from qgis.gui import *
+from PyQt4.QtCore import Qt, QModelIndex, QSize, QObject, SIGNAL
+from PyQt4.QtGui import QWidget, QGroupBox, QFont, QApplication, QSizePolicy, \
+                        QTableView, QVBoxLayout, QStandardItemModel, QPushButton, \
+                        QApplication, QHBoxLayout
+from qgis.core import QgsPoint, QgsRectangle, QgsGeometry, QgsRaster
+from qgis.gui import QgsMessageBar
 from plottingtool import PlottingTool
 
 from osgeo import gdal, ogr
 import numpy as np
-from PyQt4.QtCore import SIGNAL,SLOT,pyqtSignature
 
 
 class DoProfile(QWidget):
@@ -84,15 +83,14 @@ class DoProfile(QWidget):
                 self.removeClosedLayers(model1)
                 break
 
-    def calculatePointProfile(self, points, model, library):
+    def calculatePointProfile(self, point, model, library):
         self.model = model
         self.library = library
         
-        self.pointToProfile = points[0]
         statName = self.getPointProfileStatNames()[0]
 
         self.removeClosedLayers(model)
-        if self.pointToProfile == None:
+        if point == None:
             return
         PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
@@ -106,7 +104,6 @@ class DoProfile(QWidget):
 
             if layer:
                 try:
-                    point = self.tool.toLayerCoordinates(layer , QgsPoint(self.pointToProfile[0],self.pointToProfile[1]))
                     ident = layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue )
                 except:
                     ident = None
@@ -211,6 +208,8 @@ class DoProfile(QWidget):
             for bandNumber in range(1, rasterDS.RasterCount+1): 
                 rasterBand = rasterDS.GetRasterBand(bandNumber)
                 noData = rasterBand.GetNoDataValue()
+                if noData is None:
+                    noData = np.nan
                 scale = rasterBand.GetScale()
                 if scale is None:
                     scale = 1.0
@@ -256,6 +255,7 @@ class DoProfile(QWidget):
             return
         
         elif self.xAxisSteps[0] == "Timesteps":
+            self.changeXAxisStepType("numeric")
             for profile in self.profiles:
                 stepsNum = len(profile["l"])
                 startTime = self.xAxisSteps[1]
@@ -300,7 +300,6 @@ class DoProfile(QWidget):
                     for i in range(stepsNum):
                         timedeltaParams = {stepType: step*i}
                         profile["l"].append(startTime + timedelta(**timedeltaParams))
-                
                 self.changeXAxisStepType("timedate")        
         else:
             for profile in self.profiles:
@@ -331,14 +330,8 @@ class DoProfile(QWidget):
             PlottingTool().resetAxis(self.dockwidget, self.library)
     
     def mapToPixel(self, mX, mY, geoTransform):
-        # GDAL 1.x
-        try:
-            (pX, pY) = gdal.ApplyGeoTransform(
-                gdal.InvGeoTransform(geoTransform)[1], mX, mY)
-        # GDAL 2.x
-        except TypeError:
-            (pX, pY) = gdal.ApplyGeoTransform(
-                gdal.InvGeoTransform(geoTransform), mX, mY)
+        (pX, pY) = gdal.ApplyGeoTransform(
+            gdal.InvGeoTransform(geoTransform), mX, mY)
             
         return (int(pX), int(pY))            
     
@@ -432,7 +425,6 @@ class DoProfile(QWidget):
             text += "\n"
         self.clipboard.setText(text)
 
-
     def reScalePlot(self, param):                         # called when a spinbox value changed
         if type(param) != float:    
             # don't execute it twice, for both valueChanged(int) and valueChanged(str) signals
@@ -441,11 +433,3 @@ class DoProfile(QWidget):
             # don't execute it on init
             return
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.model, self.library, autoMode = False)
-
-
-    def getProfileCurve(self,nr):
-        try:
-            return self.profiles[nr]["curve"]
-        except:
-            return None
-

@@ -33,17 +33,17 @@
 
 from math import log10, floor, ceil, sqrt, isnan
 
-from qgis.core import *
-from qgis.gui import *
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.QtSvg import *
+from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtGui import QSizePolicy, QPen, QFileDialog, QPrintDialog, QPrinter, \
+                        QPixmap, QColor
+from PyQt4.QtSvg import QSvgGenerator
 import platform
 
 has_qwt = False
 has_mpl = False
 try:
-    from PyQt4.Qwt5 import *
+    from PyQt4.Qwt5 import QwtPlot, QwtPlotZoomer, QwtPicker, QwtPlotPicker, \
+                           QwtPlotGrid, QwtPlotCurve, QwtPlotItem, Qwt
     has_qwt = True
     import itertools # only needed for Qwt plot
 except:
@@ -53,7 +53,6 @@ try:
     has_mpl = True
 except:
     pass
-
 
 
 class PlottingTool:
@@ -112,7 +111,6 @@ class PlottingTool:
             profileName = model1.item(i,4).data(Qt.EditRole)
             profileId = model1.item(i,5).data(Qt.EditRole)
             isVisible = model1.item(i,0).data(Qt.CheckStateRole)
-            
             xx = profiles[i]["l"]
             yy = profiles[i][profileName]
         
@@ -149,6 +147,11 @@ class PlottingTool:
                     # Create new line
                     line = wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = profileId)[0]
                 line.set_visible(isVisible)
+                # X-axis have to be set before wdg is redrawn in changeColor, otherwise and
+                # exception is sometimes thrown when time-based axis is used.
+                minimumValueX = min( z for z in profiles[i]["l"])
+                maximumValueX = max( z for z in profiles[i]["l"])
+                wdg.plotWdg.figure.get_axes()[0].set_xlim([minimumValueX, maximumValueX])
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), profileId)
 
     def findMin(self,profiles, profileName, nr):
@@ -265,7 +268,6 @@ class PlottingTool:
                     wdg.plotWdg.draw()
                     break
 
-
     def changeAttachCurve(self, wdg, library, isVisible, name):                #Action when clicking the tableview - checkstate
         if library == "Qwt5":
             for curve in wdg.plotWdg.itemList():
@@ -281,13 +283,11 @@ class PlottingTool:
                     wdg.plotWdg.draw()
                     break
 
-
     def manageMatplotlibAxe(self, axe1):
         axe1.grid(True)
         axe1.tick_params(axis = "both", which = "major", direction= "out", length=10, width=1, bottom = True, top = False, left = True, right = False)
         axe1.minorticks_on()
         axe1.tick_params(axis = "both", which = "minor", direction= "out", length=5, width=1, bottom = True, top = False, left = True, right = False)
-
 
     def outPrint(self, iface, wdg, mdl, library): # Postscript file rendering doesn't work properly yet.
         for i in range (0,mdl.rowCount()):
@@ -309,7 +309,6 @@ class PlottingTool:
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
 
-
     def outPDF(self, iface, wdg, mdl, library):
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
@@ -326,8 +325,6 @@ class PlottingTool:
                 wdg.plotWdg.print_(printer)
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
-
-
 
     def outSVG(self, iface, wdg, mdl, library):
         for i in range (0,mdl.rowCount()):
