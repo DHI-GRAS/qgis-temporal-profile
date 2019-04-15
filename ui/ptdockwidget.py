@@ -40,7 +40,7 @@ import os
 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QObject, QModelIndex, pyqtSignal
-from qgis.PyQt.QtWidgets import QDockWidget
+from qgis.PyQt.QtWidgets import QDockWidget, QFileDialog
 
 from ..tools.plottingtool import PlottingTool
 
