@@ -33,9 +33,9 @@ In addition, when Matplotlib is used as the plotting library, the built-in "Figu
 
 ![](https://github.com/TIGER-NET/screenshots/blob/master/Temporal_profile_tool/temporal_profile_figure_options.png)
 
-This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa.
+This plugin was initially developed under the TIGER-NET project (www.tiger-net.org) funded by the European Space Agency (ESA) and currently is part of GlobWetland Africa Toolbox (http://globwetland-africa.org) also funded by ESA.
 
-Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
+Copyright (C) 2020 DHI-GRAS A/S (http://www.dhi-gras.com).
 
 Based on Profile tool plugin:
   Copyright (C) 2008 Borys Jurgiel,

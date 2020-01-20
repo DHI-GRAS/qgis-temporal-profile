@@ -6,15 +6,17 @@ about =
 
 	After installation and activation the plugin can be accessed either from main menu (under Plugins > Profile Tool > Temporal/Spectral Profile) or from an icon on the taskbar.
  
-	This plugin is part of the Water Observation Information System (WOIS) developed under the TIGER-NET project funded by the European Space Agency as part of the long-term TIGER initiative aiming at promoting the use of Earth Observation (EO) for improved Integrated Water Resources Management (IWRM) in Africa. Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
+	This plugin was initially developed under the TIGER-NET project (www.tiger-net.org) funded by the European Space Agency (ESA) and currently is part of GlobWetland Africa Toolbox (http://globwetland-africa.org) also funded by ESA. Copyright (C) 2020 DHI-GRAS A/S (http://www.dhi-gras.com).
 category=Raster
-version=2.0.0
+version=2.0.1
 qgisMinimumVersion=3.00
 
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=2.0.0
+changelog=2.0.1
+    - Fix handling of NaN values.
+    2.0.0
     - Make compatible with QGIS 3.0.
     - Add functionality to plot point profiles without clicking.
     - Do not use the same colour for all newly added layers. 
