@@ -256,7 +256,6 @@ class DoProfile(QWidget):
             return
         
         elif self.xAxisSteps[0] == "Timesteps":
-            self.changeXAxisStepType("numeric")
             for profile in self.profiles:
                 stepsNum = len(profile["l"])
                 startTime = self.xAxisSteps[1]
