@@ -115,7 +115,8 @@ class DoProfile(QWidget):
         
         self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
-        PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
+        if self.dockwidget.cboAutoScale.isChecked():
+            PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
         self.setupTableTab(model)
 
     def getPointProfileStatNames(self):
@@ -242,7 +243,8 @@ class DoProfile(QWidget):
         
         self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
-        PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
+        if self.dockwidget.cboAutoScale.isChecked():
+            PlottingTool().reScalePlot(self.dockwidget, self.profiles, model, library)
         self.setupTableTab(model)
 
     def getPolygonProfileStatNames(self):

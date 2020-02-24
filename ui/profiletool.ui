@@ -235,6 +235,16 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QCheckBox" name="cboAutoScale">
+              <property name="text">
+               <string>Auto scale</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
           <item row="0" column="2">
@@ -347,8 +357,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1345</width>
-             <height>287</height>
+             <width>1353</width>
+             <height>302</height>
             </rect>
            </property>
           </widget>
