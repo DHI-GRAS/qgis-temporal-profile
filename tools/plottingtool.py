@@ -34,14 +34,16 @@ from builtins import str
 from builtins import range
 from builtins import object
 
-from math import log10, floor, ceil, sqrt, isnan
+from math import log10, floor, ceil, isnan
+import platform
 
 from qgis.PyQt.QtCore import Qt, QSize
 from qgis.PyQt.QtWidgets import QSizePolicy, QFileDialog
 from qgis.PyQt.QtGui import QPen, QPixmap, QColor
 from qgis.PyQt.QtPrintSupport import QPrintDialog, QPrinter
 from qgis.PyQt.QtSvg import QSvgGenerator
-import platform
+
+from temporalprofiletool import nc_time_axis
 
 has_qwt = False
 has_mpl = False

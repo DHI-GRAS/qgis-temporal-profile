@@ -40,3 +40,5 @@ Copyright (C) 2020 DHI-GRAS A/S (http://www.dhi-gras.com).
 Based on Profile tool plugin:
   Copyright (C) 2008 Borys Jurgiel,
   Copyright (C) 2012 Patrice Verchere
+
+The plugin contains Python nc-time-axis package. See https://github.com/SciTools/nc-time-axis for license and details.
