@@ -12,13 +12,15 @@ about =
 
 
 category=Raster
-version=2.0.2
+version=2.0.3
 qgisMinimumVersion=3.00
 
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=2.0.2
+changelog=2.0.3
+    -   Import nc_time_axis only when matplotlib is available
+    2.0.2
     - Add nc-time-axis to fix issues with dates in some netCDF files.
     - Fix bug which always reset axes when using timesteps
     - Allow y-axis range to be locked
