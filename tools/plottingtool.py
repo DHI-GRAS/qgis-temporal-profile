@@ -43,8 +43,6 @@ from qgis.PyQt.QtGui import QPen, QPixmap, QColor
 from qgis.PyQt.QtPrintSupport import QPrintDialog, QPrinter
 from qgis.PyQt.QtSvg import QSvgGenerator
 
-from temporalprofiletool import nc_time_axis
-
 has_qwt = False
 has_mpl = False
 try:
@@ -57,6 +55,7 @@ except:
 try:
     import matplotlib
     has_mpl = True
+    from temporalprofiletool import nc_time_axis
 except:
     pass
 
