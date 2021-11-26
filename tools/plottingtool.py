@@ -5,7 +5,7 @@
    plottingtool.py
 -------------------------------------
     Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
-    
+
     Based on Profile tool plugin:
       Copyright (C) 2012  Patrice Verchere
 
@@ -21,7 +21,7 @@
 * by the Free Software Foundation, either version 3 of the License,       *
 * or (at your option) any later version.                                  *
 *                                                                         *
-* WOIS is distributed in the hope that it will be useful, but WITHOUT ANY * 
+* WOIS is distributed in the hope that it will be useful, but WITHOUT ANY *
 * WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License   *
 * for more details.                                                       *
@@ -116,10 +116,10 @@ class PlottingTool(object):
             profileName = model1.item(i,4).data(Qt.EditRole)
             profileId = model1.item(i,5).data(Qt.EditRole)
             isVisible = model1.item(i,0).data(Qt.CheckStateRole)
-            
+
             xx = profiles[i]["l"]
             yy = profiles[i][profileName]
-        
+
             if library == "Qwt5" and has_qwt:
                 # As QwtPlotCurve doesn't support nodata, split the data into single lines
                 # with breaks wherever data is None.
@@ -141,10 +141,15 @@ class PlottingTool(object):
                     curve.setPen(QPen(model1.item(i,1).data(Qt.BackgroundRole), 3))
                     curve.attach(wdg.plotWdg)
                     curve.setVisible(isVisible)
-            
+
             elif library == "Matplotlib" and has_mpl:
                 lines = wdg.plotWdg.figure.get_axes()[0].get_lines()
                 lineIds = [line.get_gid() for line in lines]
+                # X-axis have to be set before wdg is redrawn in changeColor, otherwise and
+                # exception is sometimes thrown when time-based axis is used.
+                minimumValueX = min( z for z in profiles[i]["l"])
+                maximumValueX = max( z for z in profiles[i]["l"])
+                wdg.plotWdg.figure.get_axes()[0].set_xlim([minimumValueX, maximumValueX])
                 if profileId in lineIds:
                     # Update existing line
                     line = lines[lineIds.index(profileId)]
@@ -153,11 +158,6 @@ class PlottingTool(object):
                     # Create new line
                     line = wdg.plotWdg.figure.get_axes()[0].plot(xx, yy, gid = profileId)[0]
                 line.set_visible(isVisible)
-                # X-axis have to be set before wdg is redrawn in changeColor, otherwise and
-                # exception is sometimes thrown when time-based axis is used.
-                minimumValueX = min( z for z in profiles[i]["l"])
-                maximumValueX = max( z for z in profiles[i]["l"])
-                wdg.plotWdg.figure.get_axes()[0].set_xlim([minimumValueX, maximumValueX])
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), profileId)
 
     def findMin(self,profiles, profileName, nr):
@@ -177,7 +177,7 @@ class PlottingTool(object):
     def reScalePlot(self, wdg, profiles, model, library, autoMode = True):                         # called when spinbox value changed
         if profiles == None:
             return
-        
+
         # Rescale Y-axis
         minimumValue = wdg.sbMinVal.value()
         maximumValue = wdg.sbMaxVal.value()
@@ -205,11 +205,11 @@ class PlottingTool(object):
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.get_axes()[0].set_ybound(minimumValue,maximumValue)
                 wdg.plotWdg.draw()
-                
+
         # Rescale X-axis
         minimumValueX = None
         maximumValueX = None
-        for i in range(0,len(profiles)):    
+        for i in range(0,len(profiles)):
             minimumValueX = min( z for z in profiles[i]["l"])
             maximumValueX = max( z for z in profiles[i]["l"])
         if minimumValueX is None:
