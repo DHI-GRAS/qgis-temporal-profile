@@ -41,7 +41,7 @@ from datetime import datetime, timedelta
 from qgis.PyQt.QtCore import Qt, QModelIndex, QSize, QObject
 from qgis.PyQt.QtWidgets import QWidget, QGroupBox, QApplication, QSizePolicy, QTableView, QVBoxLayout, QPushButton, QApplication, QHBoxLayout
 from qgis.PyQt.QtGui import QFont, QStandardItemModel
-from qgis.core import QgsPoint, QgsRectangle, QgsGeometry, QgsRaster
+from qgis.core import QgsPoint, QgsRectangle, QgsGeometry, QgsRaster, QgsProject, QgsCoordinateReferenceSystem, QgsCoordinateTransform
 from qgis.gui import QgsMessageBar
 from .plottingtool import PlottingTool
 
@@ -85,6 +85,32 @@ class DoProfile(QWidget):
                 self.removeClosedLayers(model1)
                 break
 
+    def transform_geom(self, geom, src_epsg_code, dst_epsg_code):
+        """
+         Transforms the given QgsGeometry object with the given src and dest EPSG code parameters.
+
+        :param geom: QgsGeometry object
+        :param src_epsg_code: source EPSG Code
+        :param dst_epsg_code: destination EPSG Code
+
+        :return: transformed QgsGeometry object
+        """
+
+        if isinstance(src_epsg_code, type(1)) and isinstance(dst_epsg_code, type(1)):
+
+            crsSrc = QgsCoordinateReferenceSystem.fromEpsgId(src_epsg_code)
+            crsDest = QgsCoordinateReferenceSystem.fromEpsgId(dst_epsg_code)
+            xform = QgsCoordinateTransform(crsSrc,
+                                           crsDest,
+                                           QgsProject.instance())
+
+            geom.transform(xform)
+
+            return geom
+
+        else:
+            return None
+
     def calculatePointProfile(self, point, model, library):
         self.model = model
         self.library = library
@@ -104,6 +130,13 @@ class DoProfile(QWidget):
             layer = self.profiles[i]["layer"]
             if layer:
                 try:
+                    # project to CRS of the current Raster if they don't match
+                    prj_epsg = int(QgsProject.instance().crs().authid().split("EPSG:")[1])
+                    lyr_epsg = int(layer.crs().authid().split("EPSG:")[1])
+                    if prj_epsg != lyr_epsg:
+                        geom = QgsGeometry.fromPointXY(point)
+                        t_geom = self.transform_geom(geom, prj_epsg, lyr_epsg)
+                        point = t_geom.asPoint()
                     ident = layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue )
                 except:
                     ident = None
