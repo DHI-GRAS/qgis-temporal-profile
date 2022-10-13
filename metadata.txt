@@ -5,20 +5,22 @@ about =
 	A QGIS plugin for interactive plotting of temporal or spectral information stored in multi-band rasters. Based on Profile tool plugin.
 
 	After installation and activation the plugin can be accessed either from main menu (under Plugins > Profile Tool > Temporal/Spectral Profile) or from an icon on the taskbar.
- 
+
 	This plugin was initially developed under the TIGER-NET project (www.tiger-net.org) funded by the European Space Agency (ESA) and currently is part of GlobWetland Africa Toolbox (http://globwetland-africa.org) also funded by ESA. Copyright (C) 2020 DHI-GRAS A/S (http://www.dhi-gras.com).
 
     The plugin contains Python nc-time-axis package. See https://github.com/SciTools/nc-time-axis for license and details.
 
 
 category=Raster
-version=2.0.3
-qgisMinimumVersion=3.00
+version=2.1.0
+qgisMinimumVersion=3.10.3
 
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=2.0.3
+changelog=2.1.0
+    - Allow project (in case of point selection) or polygon to have different projection to raster layer
+    2.0.3
     -   Import nc_time_axis only when matplotlib is available
     2.0.2
     - Add nc-time-axis to fix issues with dates in some netCDF files.
@@ -29,7 +31,7 @@ changelog=2.0.3
     2.0.0
     - Make compatible with QGIS 3.0.
     - Add functionality to plot point profiles without clicking.
-    - Do not use the same colour for all newly added layers. 
+    - Do not use the same colour for all newly added layers.
     1.2.2
     - Bug fixes
     1.2.1
@@ -50,7 +52,7 @@ changelog=2.0.3
 	1.1.0
 	- Add option for plotting zonal statistics' temporal/spectral profiles
 	- Small GUI adjustments to maintain the same look as Profile Tool
-	- Bug fixes 
+	- Bug fixes
 	1.0.1
 	- Update metadata.txt
 
