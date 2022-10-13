@@ -5,7 +5,7 @@
    doprofile.py
 -------------------------------------
     Copyright (C) 2014 TIGER-NET (www.tiger-net.org)
-    
+
     Based on Profile tool plugin:
       Copyright (C) 2008  Borys Jurgiel
       Copyright (C) 2012  Patrice Verchere
@@ -22,7 +22,7 @@
 * by the Free Software Foundation, either version 3 of the License,       *
 * or (at your option) any later version.                                  *
 *                                                                         *
-* WOIS is distributed in the hope that it will be useful, but WITHOUT ANY * 
+* WOIS is distributed in the hope that it will be useful, but WITHOUT ANY *
 * WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License   *
 * for more details.                                                       *
@@ -114,7 +114,7 @@ class DoProfile(QWidget):
     def calculatePointProfile(self, point, model, library):
         self.model = model
         self.library = library
-        
+
         statName = self.getPointProfileStatNames()[0]
 
         self.removeClosedLayers(model)
@@ -145,7 +145,7 @@ class DoProfile(QWidget):
             if ident is not None:
                 self.profiles[i][statName] = list(ident.results().values())
                 self.profiles[i]["l"] = list(ident.results().keys())
-        
+
         self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
         if self.dockwidget.cboAutoScale.isChecked():
@@ -155,46 +155,55 @@ class DoProfile(QWidget):
     def getPointProfileStatNames(self):
         return ["value"]
 
-    # The code is based on the approach of ZonalStatistics from Processing toolbox 
+    # The code is based on the approach of ZonalStatistics from Processing toolbox
     def calculatePolygonProfile(self, geometry, crs, model, library):
         self.model = model
         self.library = library
-        
+
         self.removeClosedLayers(model)
         if geometry is None or geometry.isEmpty():
             return
-        
+
         PlottingTool().clearData(self.dockwidget, model, library)
         self.profiles = []
 
-        #creating the plots of profiles
-        for i in range(0 , model.rowCount()):
-            self.profiles.append( {"layer": model.item(i,3).data(Qt.EditRole) } )
+        # creating the plots of profiles
+        for i in range(0, model.rowCount()):
+            layer = model.item(i, 3).data(Qt.EditRole)
+            self.profiles.append({"layer": layer})
             self.profiles[i]["l"] = []
             for statistic in self.getPolygonProfileStatNames():
                 self.profiles[i][statistic] = []
-            
+
+            # project to CRS of the current Raster if they don't match
+            vector_ref_system = QgsCoordinateReferenceSystem()
+            vector_ref_system.createFromProj(crs.ExportToProj4())
+            vector_epsg = int(vector_ref_system.authid().split("EPSG:")[1])
+            raster_epsg = int(layer.crs().authid().split("EPSG:")[1])
+            if vector_epsg != raster_epsg:
+                t_geometry = self.transform_geom(geometry, vector_epsg, raster_epsg)
+            else:
+                t_geometry = geometry.copy()
+
             # Get intersection between polygon geometry and raster following ZonalStatistics code
-            rasterDS = gdal.Open(self.profiles[i]["layer"].source(), gdal.GA_ReadOnly)
+            rasterDS = gdal.Open(layer.source(), gdal.GA_ReadOnly)
             geoTransform = rasterDS.GetGeoTransform()
-            
-    
             cellXSize = abs(geoTransform[1])
             cellYSize = abs(geoTransform[5])
             rasterXSize = rasterDS.RasterXSize
             rasterYSize = rasterDS.RasterYSize
-    
+
             rasterBBox = QgsRectangle(geoTransform[0], geoTransform[3] - cellYSize
                                       * rasterYSize, geoTransform[0] + cellXSize
                                       * rasterXSize, geoTransform[3])
             rasterGeom = QgsGeometry.fromRect(rasterBBox)
-            
+
             memVectorDriver = ogr.GetDriverByName('Memory')
             memRasterDriver = gdal.GetDriverByName('MEM')
-            
-            intersectedGeom = rasterGeom.intersection(geometry)
+
+            intersectedGeom = rasterGeom.intersection(t_geometry)
             ogrGeom = ogr.CreateGeometryFromWkt(intersectedGeom.asWkt())
-            
+
             bbox = intersectedGeom.boundingBox()
 
             xMin = bbox.xMinimum()
@@ -221,7 +230,7 @@ class DoProfile(QWidget):
                 0.0,
                 geoTransform[5],
             )
-            
+
             # Create a temporary vector layer in memory
             memVDS = memVectorDriver.CreateDataSource('out')
             memLayer = memVDS.CreateLayer('poly', crs, ogr.wkbPolygon)
@@ -230,15 +239,15 @@ class DoProfile(QWidget):
             ft.SetGeometry(ogrGeom)
             memLayer.CreateFeature(ft)
             ft.Destroy()
-            
+
             # Rasterize it
             rasterizedDS = memRasterDriver.Create('', srcOffset[2],
                     srcOffset[3], 1, gdal.GDT_Byte)
             rasterizedDS.SetGeoTransform(newGeoTransform)
             gdal.RasterizeLayer(rasterizedDS, [1], memLayer, burn_values=[1])
             rasterizedArray = rasterizedDS.ReadAsArray()
-            
-            for bandNumber in range(1, rasterDS.RasterCount+1): 
+
+            for bandNumber in range(1, rasterDS.RasterCount+1):
                 rasterBand = rasterDS.GetRasterBand(bandNumber)
                 noData = rasterBand.GetNoDataValue()
                 if noData is None:
@@ -268,12 +277,12 @@ class DoProfile(QWidget):
                 self.profiles[i]["sum"].append(float(masked.sum()))
                 self.profiles[i]["unique"].append(np.unique(masked.compressed()).size)
                 self.profiles[i]["var"].append(float(masked.var()))
-                
+
             memVDS = None
             rasterizedDS = None
-        
+
         rasterDS = None
-        
+
         self.setXAxisSteps()
         PlottingTool().attachCurves(self.dockwidget, self.profiles, model, library)
         if self.dockwidget.cboAutoScale.isChecked():
@@ -287,7 +296,7 @@ class DoProfile(QWidget):
         if self.xAxisSteps == None:
             self.changeXAxisStepType("numeric")
             return
-        
+
         elif self.xAxisSteps[0] == "Timesteps":
             for profile in self.profiles:
                 stepsNum = len(profile["l"])
@@ -319,13 +328,13 @@ class DoProfile(QWidget):
                     except ImportError:
                         text = "Temporal/Spectral Profile Tool: netCDF4 module is required to read NetCDF " + \
                                "time dimension. Please use pip install netCDF4"
-                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text),
                                                            QgsMessageBar.WARNING, 5)
                         profile["l"] = []
                     except KeyError:
                         text = "Temporal/Spectral Profile Tool: NetCDF file does not have " + \
                                "time dimension."
-                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text), 
+                        self.iface.messageBar().pushWidget(self.iface.messageBar().createMessage(text),
                                                            QgsMessageBar.WARNING, 5)
                         nc.close()
                         profile["l"] = []
@@ -333,8 +342,8 @@ class DoProfile(QWidget):
                     for i in range(stepsNum):
                         timedeltaParams = {stepType: step*i}
                         profile["l"].append(startTime + timedelta(**timedeltaParams))
-                
-                self.changeXAxisStepType("timedate")        
+
+                self.changeXAxisStepType("timedate")
         else:
             for profile in self.profiles:
                 # Truncate the profiles to the minimum of the length of each profile
@@ -345,7 +354,7 @@ class DoProfile(QWidget):
                     if stat == "l" or stat == "layer":
                         continue
                     profile[stat] = profile[stat][:stepsNum]
-                    
+
                 # If any x-axis step is a NaN then remove the corresponding
                 # value from profile
                 nans = [i for i, x in enumerate(profile["l"]) if math.isnan(x)]
@@ -353,22 +362,22 @@ class DoProfile(QWidget):
                     if stat == "layer":
                         continue
                     profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
-            
+
             self.changeXAxisStepType("numeric")
-            
+
     def changeXAxisStepType(self, newType):
         if self.xAxisStepType == newType:
             return
         else:
             self.xAxisStepType = newType
             PlottingTool().resetAxis(self.dockwidget, self.library)
-    
+
     def mapToPixel(self, mX, mY, geoTransform):
         (pX, pY) = gdal.ApplyGeoTransform(
             gdal.InvGeoTransform(geoTransform), mX, mY)
-            
-        return (int(pX), int(pY))            
-    
+
+        return (int(pX), int(pY))
+
     def setupTableTab(self, model1):
         #*********************** TAble tab *************************************************
         try:                                                                    #Reinitializing the table tab
@@ -460,7 +469,7 @@ class DoProfile(QWidget):
         self.clipboard.setText(text)
 
     def reScalePlot(self, param):                         # called when a spinbox value changed
-        if type(param) != float:    
+        if type(param) != float:
             # don't execute it twice, for both valueChanged(int) and valueChanged(str) signals
             return
         if self.dockwidget.sbMinVal.value() == self.dockwidget.sbMaxVal.value() == 0:
