@@ -133,13 +133,14 @@ class DoProfile(QWidget):
                     # project to CRS of the current Raster if they don't match
                     prj_epsg = int(QgsProject.instance().crs().authid().split("EPSG:")[1])
                     lyr_epsg = int(layer.crs().authid().split("EPSG:")[1])
-                    if prj_epsg != lyr_epsg:
-                        geom = QgsGeometry.fromPointXY(point)
-                        t_geom = self.transform_geom(geom, prj_epsg, lyr_epsg)
-                        point = t_geom.asPoint()
-                    ident = layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue )
-                except:
-                    ident = None
+                except IndexError:
+                    prj_epsg = lyr_epsg = None
+                if prj_epsg != lyr_epsg:
+                    geom = QgsGeometry.fromPointXY(point)
+                    t_geom = self.transform_geom(geom, prj_epsg, lyr_epsg)
+                    point = t_geom.asPoint()
+                ident = layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue)
+
             else:
                 ident = None
             if ident is not None:
@@ -178,12 +179,15 @@ class DoProfile(QWidget):
             # project to CRS of the current Raster if they don't match
             vector_ref_system = QgsCoordinateReferenceSystem()
             vector_ref_system.createFromProj(crs.ExportToProj4())
-            vector_epsg = int(vector_ref_system.authid().split("EPSG:")[1])
-            raster_epsg = int(layer.crs().authid().split("EPSG:")[1])
+            try:
+                vector_epsg = int(vector_ref_system.authid().split("EPSG:")[1])
+                raster_epsg = int(layer.crs().authid().split("EPSG:")[1])
+            except IndexError:
+                vector_epsg = raster_epsg = None
             if vector_epsg != raster_epsg:
                 t_geometry = self.transform_geom(geometry, vector_epsg, raster_epsg)
             else:
-                t_geometry = geometry.copy()
+                t_geometry = geometry
 
             # Get intersection between polygon geometry and raster following ZonalStatistics code
             rasterDS = gdal.Open(layer.source(), gdal.GA_ReadOnly)
