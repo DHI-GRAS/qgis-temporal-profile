@@ -18,7 +18,9 @@ qgisMinimumVersion=3.10.3
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=2.1.0
+changelog=2.1.1
+    - Fix exception when raster layer does not have a projection
+    2.1.0
     - Allow project (in case of point selection) or polygon to have different projection to raster layer
     2.0.3
     -   Import nc_time_axis only when matplotlib is available
