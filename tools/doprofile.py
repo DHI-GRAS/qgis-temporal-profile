@@ -327,7 +327,8 @@ class DoProfile(QWidget):
                         nc = netCDF4.Dataset(filename, mode='r')
                         profile["l"] = netCDF4.num2date(nc.variables["time"][:],
                                                         units = nc.variables["time"].units,
-                                                        calendar = nc.variables["time"].calendar)
+                                                        calendar = nc.variables["time"].calendar,
+                                                        only_use_cftime_datetimes=False)
                         nc.close()
                     except ImportError:
                         text = "Temporal/Spectral Profile Tool: netCDF4 module is required to read NetCDF " + \
