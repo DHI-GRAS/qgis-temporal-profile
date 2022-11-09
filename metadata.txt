@@ -12,13 +12,15 @@ about =
 
 
 category=Raster
-version=2.1.1
+version=2.1.2
 qgisMinimumVersion=3.10.3
 
 author=Radoslaw Guzinski
 email=radosuav@op.pl
 
-changelog=2.1.1
+changelog=2.1.2
+    - Read netCDF time dimension as standard Python datetime object. Avoids the use of nc_time_axis which is causing issues due to different versions of packages in different installations.
+    2.1.1
     - Fix exception when raster layer does not have a projection
     2.1.0
     - Allow project (in case of point selection) or polygon to have different projection to raster layer
