@@ -36,6 +36,7 @@ from builtins import str
 from builtins import range
 from builtins import object
 import re
+from dateutil import parser
 
 from osgeo import osr
 from qgis.PyQt.QtCore import Qt, QObject
@@ -275,9 +276,12 @@ class TemporalSpectralProfilePlugin(object):
             try:
                 self.doprofile.xAxisSteps = [float(x) for x in values]
             except ValueError:
-                self.doprofile.xAxisSteps = None
-                text = "The X-axis steps' string is invalid. Using band numbers instead."
-                self.iface.messageBar().pushWarning("Temporal/Spectral Profile Tool", text)
+                try:
+                    self.doprofile.xAxisSteps = [parser.parse(x) for x in values]
+                except ValueError:
+                    self.doprofile.xAxisSteps = None
+                    text = "The X-axis steps' string is invalid. Using band numbers instead."
+                    self.iface.messageBar().pushWarning("Temporal/Spectral Profile Tool", text)
 
         # Labels based on time
         elif self.wdg.cboXAxis.currentIndex() == 2:

@@ -360,15 +360,18 @@ class DoProfile(QWidget):
                         continue
                     profile[stat] = profile[stat][:stepsNum]
 
-                # If any x-axis step is a NaN then remove the corresponding
-                # value from profile
-                nans = [i for i, x in enumerate(profile["l"]) if math.isnan(x)]
-                for stat in list(profile.keys()):
-                    if stat == "layer":
-                        continue
-                    profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
-
-            self.changeXAxisStepType("numeric")
+                try:
+                    # If any x-axis step is a NaN then remove the corresponding
+                    # value from profile
+                    nans = [i for i, x in enumerate(profile["l"]) if math.isnan(x)]
+                    for stat in list(profile.keys()):
+                        if stat == "layer":
+                            continue
+                        profile[stat] = [x for i, x in enumerate(profile[stat]) if i not in nans]
+                    self.changeXAxisStepType("numeric")
+                except TypeError:
+                    # If above throws an exception then we are probably dealing with date
+                    self.changeXAxisStepType("timedate")
 
     def changeXAxisStepType(self, newType):
         if self.xAxisStepType == newType:
